@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f1117">
+    <title>Speedtest</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/gopher-speed.svg">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar">
+            <div class="nav-brand">
+                <img src="/assets/gopher-speed.svg" alt="" width="46" height="46">
+                <span>Speedtest</span>
+            </div>
+            <div class="nav-tabs">
+                <button class="nav-tab active" data-tab="live">Live</button>
+                <button class="nav-tab" data-tab="history">Historie</button>
+                <button class="nav-tab" data-tab="profiles">Profile</button>
+                <button class="nav-tab" data-tab="settings">Settings</button>
+            </div>
+        </nav>
+
+        <main class="content">
+            <!-- Live Tab -->
+            <section id="tab-live" class="tab-content active">
+                <!-- Test Controls -->
+                <div class="test-controls">
+                    <select id="profile-select" class="profile-select">
+                        <option value="">Profil wählen...</option>
+                    </select>
+                    <button id="btn-start-test" class="btn btn-primary btn-large">
+                        ▶ Test starten
+                    </button>
+                </div>
+
+                <!-- Progress (during test) -->
+                <div id="test-progress" class="test-progress hidden">
+                    <div class="progress-phase" id="phase-label">Bereit</div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                <div id="live-chart-container" class="chart-container hidden" style="height:200px;">
+                    <canvas id="live-chart"></canvas>
+                </div>
+
+                <!-- Result Cards (after test or last result) -->
+                <div id="test-results" class="result-grid">
+                    <div class="result-card">
+                        <div class="result-label">Download</div>
+                        <div class="result-value" id="result-download">—</div>
+                        <div class="result-unit">Mbps</div>
+                        <div id="tariff-download" class="tariff-result hidden"></div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-label">Upload</div>
+                        <div class="result-value" id="result-upload">—</div>
+                        <div class="result-unit">Mbps</div>
+                        <div id="tariff-upload" class="tariff-result hidden"></div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-label">Ping</div>
+                        <div class="result-value" id="result-ping">—</div>
+                        <div class="result-unit">ms</div>
+                    </div>
+                    <div class="result-card">
+                        <div class="result-label">Jitter</div>
+                        <div class="result-value" id="result-jitter">—</div>
+                        <div class="result-unit">ms</div>
+                    </div>
+                </div>
+                <div id="result-extras" class="result-grid hidden">
+                    <div class="result-card result-card-wide">
+                        <div class="result-label">Bufferbloat</div>
+                        <div class="result-value-row">
+                            <span class="result-value" id="result-bb-score">—</span>
+                            <span class="result-detail">
+                                Idle: <strong id="result-bb-idle">—</strong> ms ·
+                                Loaded: <strong id="result-bb-loaded">—</strong> ms
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div id="test-server-info" class="server-info hidden"></div>
+
+                <!-- Dashboard: averages, highs/lows and daily trends -->
+                <div id="dashboard-section">
+                    <div class="dashboard-header">
+                        <div>
+                            <h2>Netzwerk-Überblick</h2>
+                            <span id="dashboard-updated" class="dashboard-updated"></span>
+                        </div>
+                        <div class="range-switch" id="dashboard-range">
+                            <button data-days="3">3 Tage</button>
+                            <button data-days="5">5 Tage</button>
+                            <button data-days="7" class="active">7 Tage</button>
+                            <button data-days="14">2 Wochen</button>
+                            <button data-days="30">1 Monat</button>
+                        </div>
+                    </div>
+                    <div id="stats-empty" class="coming-soon hidden">Keine Messwerte für diesen Zeitraum.</div>
+                    <div id="metric-rings" class="metric-rings">
+                        <div class="metric-ring-card" data-metric="download"><div class="ring-wrap"><canvas id="ring-download"></canvas><div class="ring-center"><strong id="avg-download">—</strong><small>Mbps</small></div></div><h3>Download</h3><div id="extrema-download" class="extrema"></div></div>
+                        <div class="metric-ring-card" data-metric="upload"><div class="ring-wrap"><canvas id="ring-upload"></canvas><div class="ring-center"><strong id="avg-upload">—</strong><small>Mbps</small></div></div><h3>Upload</h3><div id="extrema-upload" class="extrema"></div></div>
+                        <div class="metric-ring-card" data-metric="ping"><div class="ring-wrap"><canvas id="ring-ping"></canvas><div class="ring-center"><strong id="avg-ping">—</strong><small>ms</small></div></div><h3>Ping</h3><div id="extrema-ping" class="extrema"></div></div>
+                        <div class="metric-ring-card" data-metric="jitter"><div class="ring-wrap"><canvas id="ring-jitter"></canvas><div class="ring-center"><strong id="avg-jitter">—</strong><small>ms</small></div></div><h3>Jitter</h3><div id="extrema-jitter" class="extrema"></div></div>
+                    </div>
+                    <div class="dashboard-chart-header">
+                        <div>
+                            <h3>Heutiger Messverlauf</h3>
+                            <small id="today-date"></small>
+                        </div>
+                        <span id="today-count"></span>
+                    </div>
+                    <div class="chart-container" style="height:300px;">
+                        <canvas id="stats-chart"></canvas>
+                    </div>
+                    <div class="recent-header"><h3>Letzte Messungen</h3></div>
+                    <div id="recent-tests" class="recent-list"></div>
+                </div>
+            </section>
+
+            <!-- History Tab -->
+            <section id="tab-history" class="tab-content">
+                <div class="history-controls">
+                    <select id="history-profile" class="profile-select">
+                        <option value="">Alle Profile</option>
+                    </select>
+                    <select id="history-range" class="profile-select">
+                        <option value="24h">Letzte 24h</option>
+                        <option value="7d">Letzte 7 Tage</option>
+                        <option value="30d">Letzte 30 Tage</option>
+                    </select>
+                </div>
+                <div class="chart-container" style="height:380px;">
+                    <canvas id="history-chart"></canvas>
+                </div>
+                <div id="history-table-container">
+                    <table id="history-table" class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Zeit</th>
+                                <th>Profil</th>
+                                <th>↓ Mbps</th>
+                                <th>↑ Mbps</th>
+                                <th>Ping</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-tbody"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Profiles Tab -->
+            <section id="tab-profiles" class="tab-content">
+                <div class="profile-header">
+                    <h2>Test-Profile</h2>
+                    <button id="btn-new-profile" class="btn btn-primary">+ Neues Profil</button>
+                </div>
+                <div id="profile-list" class="profile-list"></div>
+            </section>
+
+            <!-- Settings Tab -->
+            <section id="tab-settings" class="tab-content">
+                <h2>Settings</h2>
+                <div class="settings-section">
+                    <h3>Allgemein</h3>
+                    <p class="setting-item"><strong>Port:</strong> <span id="setting-port">8080</span></p>
+                </div>
+                <div class="settings-section">
+                    <h3>📶 Anbieter & Tarif</h3>
+                    <p class="settings-help">Hinterlege die vertraglichen Geschwindigkeiten eines Messprofils. Eine Änderung wird als neue Tarifversion gespeichert, damit alte Messungen korrekt vergleichbar bleiben.</p>
+                    <p id="tariff-catalog-meta" class="tariff-catalog-meta">Tarifkatalog wird geladen …</p>
+                    <form id="tariff-form" class="tariff-form">
+                        <div class="tariff-form-grid">
+                            <label>Messprofil<select id="tariff-profile" required><option value="">Profil wählen …</option></select></label>
+                            <label>Anbieter
+                                <select id="tariff-provider-select" required><option value="">Anbieter wählen …</option></select>
+                                <input id="tariff-provider" class="hidden" type="text" placeholder="Eigenen Anbieter eingeben">
+                            </label>
+                            <label>Tarif
+                                <select id="tariff-template" required><option value="">Zuerst Anbieter wählen …</option></select>
+                                <input id="tariff-name" class="hidden" type="text" placeholder="Eigenen Tarifnamen eingeben">
+                            </label>
+                            <label>Anschlussart<select id="tariff-technology"><option value="">Nicht angegeben</option><option>DSL</option><option>Kabel</option><option>Glasfaser</option><option>Mobilfunk</option><option>Satellit</option></select></label>
+                        </div>
+                        <div class="tariff-speed-grid">
+                            <div><strong>Download</strong><label>Maximum<input id="tariff-down-max" type="number" min="0.01" step="0.01" required><span>Mbps</span></label><label>Normal<input id="tariff-down-normal" type="number" min="0" step="0.01"><span>Mbps</span></label><label>Minimum<input id="tariff-down-min" type="number" min="0" step="0.01"><span>Mbps</span></label></div>
+                            <div><strong>Upload</strong><label>Maximum<input id="tariff-up-max" type="number" min="0.01" step="0.01" required><span>Mbps</span></label><label>Normal<input id="tariff-up-normal" type="number" min="0" step="0.01"><span>Mbps</span></label><label>Minimum<input id="tariff-up-min" type="number" min="0" step="0.01"><span>Mbps</span></label></div>
+                        </div>
+                        <div class="tariff-actions"><span id="tariff-form-status"></span><button class="btn btn-primary" type="submit">Tarif speichern</button></div>
+                    </form>
+                    <div id="active-tariffs" class="active-tariffs"></div>
+                </div>
+                <div class="settings-section">
+                    <h3>🕐 Scheduler</h3>
+                    <div id="scheduler-status"></div>
+                </div>
+                <div class="settings-section locked">
+                    <h3>🔌 Alarme</h3>
+                    <p class="coming-soon">Coming Soon</p>
+                </div>
+                <div class="settings-section locked">
+                    <h3>🔌 LAN-Endpoint</h3>
+                    <p class="coming-soon">Coming Soon</p>
+                </div>
+                <div class="settings-section">
+                    <h3>Über</h3>
+                    <p>Speedtest v0.2.0 — Go + embedded Web</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="/js/app.js"></script>
+    <script src="/js/tariffs.js"></script>
+    <script src="/js/live.js"></script>
+    <script src="/js/history.js"></script>
+    <script src="/js/profiles.js"></script>
+</body>
+</html>

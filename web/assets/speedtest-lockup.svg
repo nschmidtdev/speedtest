@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 420" role="img" aria-labelledby="title desc">
+  <title id="title">Speedtest – Go network measurement</title>
+  <desc id="desc">Speedtest-Wortmarke mit laufendem Ganzkörper-Gopher.</desc>
+  <rect width="1040" height="420" rx="56" fill="#0f1117"/>
+  <image href="gopher-speed.svg" x="18" y="10" width="400" height="400"/>
+  <g font-family="Segoe UI,Inter,Arial,sans-serif">
+    <text x="408" y="207" fill="#f4f4f5" font-size="104" font-weight="800" letter-spacing="-4">Speedtest</text>
+    <text x="415" y="270" fill="#8b93a7" font-size="32" font-weight="600" letter-spacing="5">POWERED BY GO</text>
+    <path d="M417 303H846" stroke="#2a2d3a" stroke-width="9" stroke-linecap="round"/>
+    <path d="M417 303H642" stroke="#3b82f6" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="655" cy="303" r="9" fill="#22c55e"/>
+  </g>
+</svg>

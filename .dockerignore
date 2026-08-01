@@ -1,0 +1,15 @@
+.git
+.hermes
+.idea
+.vscode
+
+*.exe
+*.db
+*.db-shm
+*.db-wal
+*.log
+*.syso
+
+speedtest
+speedtest-new
+coverage.out

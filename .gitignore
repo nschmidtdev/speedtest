@@ -1,0 +1,23 @@
+# Build artifacts
+speedtest.exe
+speedtest
+speedtest-new.exe
+*.exe
+
+# SQLite databases
+*.db
+*.db-wal
+*.db-shm
+
+# Hermes session data
+.hermes/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

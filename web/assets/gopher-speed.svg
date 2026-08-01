@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Speedtest Gopher</title>
+  <desc id="desc">Ein vollständiger laufender blauer Gopher mit Netzwerkkabel und Geschwindigkeitsspuren.</desc>
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#69d7ed"/>
+      <stop offset="1" stop-color="#35a9d0"/>
+    </linearGradient>
+    <linearGradient id="trail" gradientUnits="userSpaceOnUse" x1="20" y1="0" x2="180" y2="0">
+      <stop offset="0" stop-color="#3b82f6" stop-opacity="0"/>
+      <stop offset=".55" stop-color="#3b82f6"/>
+      <stop offset="1" stop-color="#22c55e"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-25%" width="150%" height="160%">
+      <feDropShadow dx="0" dy="10" stdDeviation="9" flood-color="#05070c" flood-opacity=".34"/>
+    </filter>
+  </defs>
+
+  <!-- speed trails -->
+  <g fill="none" stroke="url(#trail)" stroke-linecap="round">
+    <path d="M28 205H137" stroke-width="16"/>
+    <path d="M53 247H160" stroke-width="10" opacity=".82"/>
+    <path d="M18 285H128" stroke-width="7" opacity=".56"/>
+  </g>
+  <g fill="#3b82f6">
+    <circle cx="45" cy="157" r="8" opacity=".8"/>
+    <circle cx="91" cy="326" r="6" opacity=".58"/>
+  </g>
+
+  <g filter="url(#shadow)" stroke="#153442" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+    <!-- tail behind body -->
+    <path d="M202 337C148 335 125 377 153 405C176 428 210 403 191 382" fill="none" stroke="#43bad9" stroke-width="31"/>
+
+    <!-- rear running leg -->
+    <path d="M246 366C225 391 199 415 162 428" fill="none" stroke="url(#body)" stroke-width="48"/>
+    <path d="M168 419C142 424 126 442 137 455C151 472 184 459 199 445" fill="#f4cfa2"/>
+
+    <!-- body -->
+    <path d="M224 203C197 240 194 316 218 369C239 414 324 425 359 382C389 345 380 265 350 211Z" fill="url(#body)"/>
+    <ellipse cx="291" cy="319" rx="58" ry="74" fill="#bceaf3" stroke-width="7" opacity=".88"/>
+
+    <!-- forward running leg -->
+    <path d="M340 365C355 391 380 414 416 427" fill="none" stroke="url(#body)" stroke-width="49"/>
+    <path d="M405 417C431 420 450 437 441 451C431 469 396 462 378 448" fill="#f4cfa2"/>
+
+    <!-- rear arm -->
+    <path d="M228 260C197 252 174 234 146 214" fill="none" stroke="url(#body)" stroke-width="42"/>
+    <path d="M151 215L126 201" fill="none" stroke="#f4cfa2" stroke-width="28"/>
+
+    <!-- forward arm -->
+    <path d="M348 258C381 257 407 243 438 224" fill="none" stroke="url(#body)" stroke-width="43"/>
+    <circle cx="442" cy="221" r="18" fill="#f4cfa2"/>
+
+    <!-- ears -->
+    <circle cx="219" cy="103" r="42" fill="#43bad9"/>
+    <circle cx="219" cy="103" r="20" fill="#efacbd" stroke-width="7"/>
+    <circle cx="362" cy="105" r="42" fill="#43bad9"/>
+    <circle cx="362" cy="105" r="20" fill="#efacbd" stroke-width="7"/>
+
+    <!-- full head -->
+    <path d="M190 157C191 91 234 57 291 57C349 57 394 94 394 160C394 225 351 263 291 263C229 263 189 224 190 157Z" fill="url(#body)"/>
+
+    <!-- eyes -->
+    <ellipse cx="255" cy="137" rx="28" ry="37" fill="#fff" stroke-width="7"/>
+    <ellipse cx="327" cy="137" rx="28" ry="37" fill="#fff" stroke-width="7"/>
+    <circle cx="263" cy="145" r="10" fill="#13232c" stroke="none"/>
+    <circle cx="319" cy="145" r="10" fill="#13232c" stroke="none"/>
+    <circle cx="267" cy="140" r="3" fill="#fff" stroke="none"/>
+    <circle cx="323" cy="140" r="3" fill="#fff" stroke="none"/>
+
+    <!-- muzzle, nose and teeth -->
+    <ellipse cx="291" cy="197" rx="73" ry="49" fill="#f4cfa2" stroke-width="7"/>
+    <path d="M270 174Q291 158 312 174Q308 194 291 196Q274 194 270 174Z" fill="#263844"/>
+    <path d="M291 196V216" fill="none" stroke-width="7"/>
+    <path d="M260 216Q291 240 322 216" fill="none" stroke-width="7"/>
+    <path d="M278 224V249H291V225M291 225V249H304V224" fill="#fff" stroke-width="6"/>
+
+    <!-- ethernet plug in front paw -->
+    <g transform="translate(439 184) rotate(-18)">
+      <rect x="0" y="0" width="47" height="52" rx="8" fill="#22c55e"/>
+      <path d="M10 0V-16H37V0M11 18H36M15 18V31M23 18V31M31 18V31" fill="none" stroke="#d7ffe4" stroke-width="5"/>
+    </g>
+  </g>
+
+  <!-- cable and signal spark -->
+  <path d="M478 215C498 246 486 287 451 298C419 309 404 289 420 273" fill="none" stroke="#22c55e" stroke-width="10" stroke-linecap="round"/>
+  <path d="M469 150L482 129M486 161L508 153M461 165L449 145" fill="none" stroke="#f59e0b" stroke-width="8" stroke-linecap="round"/>
+</svg>
