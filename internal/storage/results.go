@@ -118,6 +118,20 @@ func GetLatestResult(db *sql.DB, profileID int64) (*engine.TestResult, error) {
 	))
 }
 
+// DeleteOldResults removes results older than the given number of days.
+// Returns the number of deleted rows.
+func DeleteOldResults(db *sql.DB, retentionDays int) (int64, error) {
+	if retentionDays <= 0 {
+		return 0, nil
+	}
+	cutoff := time.Now().AddDate(0, 0, -retentionDays).UTC().Format("2006-01-02 15:04:05")
+	res, err := db.Exec(`DELETE FROM results WHERE measured_at < ?`, cutoff)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
+}
+
 func scanResult(s scanner) (*engine.TestResult, error) {
 	var r engine.TestResult
 	var (

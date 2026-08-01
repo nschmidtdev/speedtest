@@ -26,6 +26,7 @@ Dann im Browser öffnen: `http://localhost:8080`
 |---|---|---|
 | `SPEEDTEST_PORT` | `8080` | HTTP-Port |
 | `SPEEDTEST_DB` | `speedtest.db` | Pfad zur SQLite-Datenbank |
+| `SPEEDTEST_RETENTION_DAYS` | _(deaktiviert)_ | Ergebnisse älter als N Tage automatisch löschen |
 | `TZ` | Systemzeitzone | Zeitzone, im Docker-Setup `Europe/Berlin` |
 
 ## Docker

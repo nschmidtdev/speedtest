@@ -5,12 +5,23 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/showwin/speedtest-go/speedtest"
 )
 
-var rng = rand.New(rand.NewSource(time.Now().UnixNano()))
+// Thread-safe random number generator for server selection.
+var (
+	rng     = rand.New(rand.NewSource(time.Now().UnixNano()))
+	rngLock sync.Mutex
+)
+
+func randIntn(n int) int {
+	rngLock.Lock()
+	defer rngLock.Unlock()
+	return rng.Intn(n)
+}
 
 // SpeedtestEngine wrappt die speedtest-go Bibliothek.
 type SpeedtestEngine struct {
@@ -112,7 +123,7 @@ func (e *SpeedtestEngine) RunTest(ctx context.Context, opts RunOptions, cb Progr
 		server, err = e.client.FetchServerByID(fmt.Sprintf("%d", opts.ServerIDs[0]))
 	case opts.ServerMode == "random" && len(opts.ServerIDs) > 0:
 		// Random: zufälligen Server aus der ausgewählten Liste
-		idx := rng.Intn(len(opts.ServerIDs))
+		idx := randIntn(len(opts.ServerIDs))
 		server, err = e.client.FetchServerByID(fmt.Sprintf("%d", opts.ServerIDs[idx]))
 	case opts.ServerID > 0:
 		// Legacy: einzelne server_id

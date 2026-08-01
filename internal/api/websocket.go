@@ -5,17 +5,18 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"speedtest/internal/engine"
 )
 
-// Client represents a connected WebSocket client.
+// Client represents a connected SSE client.
 type Client struct {
 	ch  chan []byte
 	out chan struct{}
 }
 
-// Broadcaster managed verbunden WebSocket-Clients und verteilt Events.
+// Broadcaster manages connected SSE clients and distributes events.
 type Broadcaster struct {
 	mu      sync.RWMutex
 	clients map[*Client]struct{}
@@ -45,7 +46,7 @@ func (b *Broadcaster) Unregister(c *Client) {
 	close(c.out)
 }
 
-// Broadcast sendet ein ProgressEvent an alle verbunden Clients.
+// Broadcast sends a ProgressEvent to all connected clients.
 func (b *Broadcaster) Broadcast(ev engine.ProgressEvent) {
 	data, err := json.Marshal(ev)
 	if err != nil {
@@ -65,16 +66,7 @@ func (b *Broadcaster) Broadcast(ev engine.ProgressEvent) {
 	}
 }
 
-// === WebSocket Handler ===
-
-// WebSocketHandler handled /ws — nutzt net/http WebSocket Upgrade via golang.org/x/net/websocket?
-// Nein — wir nutzen das Standard net/http Hijack Pattern oder nhooyr.io/websocket.
-// Fürs erste nutzen wir die einfache Standard-Bibliothek ohne externe WS-Lib.
-// Da Go stdlib keinen WS hat, nutzen wir nhooyr.io/websocket.
-// Der Handler wird in Task 6 finalisiert, hier erstmal SSE als simpler Fallback.
-
-// SSEHandler — Server-Sent Events als einfache Alternative zu WebSocket.
-// Browser EventSource API ist nativ und braucht keine externe Lib.
+// SSEHandler — Server-Sent Events with heartbeat keepalive.
 func (s *AppState) SSEHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
@@ -95,6 +87,10 @@ func (s *AppState) SSEHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(": connected\n\n"))
 	flusher.Flush()
 
+	// Heartbeat ticker — keeps proxies from dropping idle connections
+	heartbeat := time.NewTicker(30 * time.Second)
+	defer heartbeat.Stop()
+
 	for {
 		select {
 		case <-notify:
@@ -106,6 +102,9 @@ func (s *AppState) SSEHandler(w http.ResponseWriter, r *http.Request) {
 			flusher.Flush()
 		case <-client.out:
 			return
+		case <-heartbeat.C:
+			w.Write([]byte(": keepalive\n\n"))
+			flusher.Flush()
 		}
 	}
 }

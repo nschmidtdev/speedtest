@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"os"
+	"strconv"
 
 	_ "modernc.org/sqlite"
 )
@@ -80,6 +82,9 @@ func Open(dbPath string) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to open database: %w", err)
 	}
 
+	// SQLite concurrency: single writer, multiple readers via WAL
+	db.SetMaxOpenConns(1)
+
 	// Enable WAL mode for better concurrent read performance
 	if _, err := db.Exec("PRAGMA journal_mode=WAL;"); err != nil {
 		log.Printf("Warning: could not enable WAL mode: %v", err)
@@ -100,7 +105,9 @@ func Open(dbPath string) (*sql.DB, error) {
 	} {
 		_, _ = db.Exec(fmt.Sprintf("ALTER TABLE profiles ADD COLUMN %s %s", col.name, col.def))
 	}
-	_, _ = db.Exec("ALTER TABLE results ADD COLUMN tariff_id INTEGER REFERENCES tariffs(id)")
+	if _, err := db.Exec("ALTER TABLE results ADD COLUMN tariff_id INTEGER REFERENCES tariffs(id)"); err != nil {
+		// Column likely already exists — ignore
+	}
 	for _, col := range []struct{ name, def string }{
 		{"tariff_down_percent", "REAL"},
 		{"tariff_down_deviation_mbps", "REAL"},
@@ -115,7 +122,28 @@ func Open(dbPath string) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to backfill tariff comparisons: %w", err)
 	}
 
+	// Retention: clean up old results if SPEEDTEST_RETENTION_DAYS is set
+	if retentionDays := getRetentionDays(); retentionDays > 0 {
+		if deleted, err := DeleteOldResults(db, retentionDays); err != nil {
+			log.Printf("Warning: retention cleanup failed: %v", err)
+		} else if deleted > 0 {
+			log.Printf("Retention: deleted %d results older than %d days", deleted, retentionDays)
+		}
+	}
+
 	return db, nil
+}
+
+func getRetentionDays() int {
+	v := os.Getenv("SPEEDTEST_RETENTION_DAYS")
+	if v == "" {
+		return 0
+	}
+	n, err := strconv.Atoi(v)
+	if err != nil || n <= 0 {
+		return 0
+	}
+	return n
 }
 
 // SeedDefaults legt die Standard-Profile an, falls noch keine existieren.

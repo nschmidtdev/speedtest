@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"net/http"
 	"sort"
@@ -20,7 +21,8 @@ func (e *SpeedtestEngine) RunBufferbloat(ctx context.Context, cb ProgressCallbac
 
 	idlePings, err := icmpPings(ctx, "1.1.1.1", 10, 100*time.Millisecond)
 	if err != nil || len(idlePings) == 0 {
-		// Fallback auf TCP/HTTP-Ping via speedtest-go
+		// ICMP needs raw sockets (admin/root) — fallback to HTTP ping
+		log.Printf("Bufferbloat: ICMP ping failed (%v), falling back to HTTP ping", err)
 		idlePings, err = httpPings(ctx, "1.1.1.1", 10, 100*time.Millisecond)
 		if err != nil || len(idlePings) == 0 {
 			return 0, 0, "error", fmt.Errorf("bufferbloat idle measurement failed: %w", err)
@@ -196,7 +198,7 @@ func icmpChecksum(b []byte) uint16 {
 // === HTTP Ping (Fallback) ===
 func httpPings(ctx context.Context, host string, count int, interval time.Duration) ([]float64, error) {
 	client := &http.Client{Timeout: 2 * time.Second}
-	url := fmt.Sprintf("http://%s/", host)
+	url := fmt.Sprintf("https://%s/", host)
 	pings := make([]float64, 0, count)
 
 	for i := 0; i < count; i++ {

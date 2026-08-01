@@ -144,7 +144,18 @@ function displayResult(result) {
 }
 
 function showToast(msg, type) {
-    alert(msg);
+    const container = document.getElementById('toast-container');
+    if (!container) { console.warn('Toast container missing:', msg); return; }
+    const icons = { error: '❌', warning: '⚠️', success: '✅', info: 'ℹ️' };
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type || 'info'}`;
+    toast.innerHTML = `<span class="toast-icon">${icons[type] || icons.info}</span><span>${escapeHtml(msg)}</span>`;
+    container.appendChild(toast);
+    const removeDelay = type === 'error' ? 6000 : 4000;
+    setTimeout(() => {
+        toast.classList.add('removing');
+        setTimeout(() => toast.remove(), 300);
+    }, removeDelay);
 }
 
 // === Live Chart (during test) ===

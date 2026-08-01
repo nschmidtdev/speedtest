@@ -79,15 +79,17 @@ func (s *AppState) StatsHandler(w http.ResponseWriter, r *http.Request) {
 		days = 7
 	}
 	profileID := int64(parseQueryInt(r, "profile_id", 0))
-	results, err := storage.GetResults(s.DB, profileID, 1000, time.Time{}, time.Time{})
+
+	now := time.Now()
+	startLocal := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).AddDate(0, 0, -(days - 1))
+	cutoff := startLocal.UTC()
+
+	results, err := storage.GetResults(s.DB, profileID, 1000, cutoff, time.Time{})
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	now := time.Now()
-	startLocal := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location()).AddDate(0, 0, -(days - 1))
-	cutoff := startLocal.UTC()
 	var dl, ul, ping, jitter statAccumulator
 	byDay := map[string]*dayAccumulator{}
 	included := 0

@@ -116,7 +116,11 @@ func parseQueryInt(r *http.Request, key string, defaultVal int) int {
 
 // HealthHandler — GET /api/health
 func (s *AppState) HealthHandler(w http.ResponseWriter, r *http.Request) {
-	writeJSON(w, map[string]string{"status": "ok", "service": "speedtest"})
+	status := "ok"
+	if err := s.DB.Ping(); err != nil {
+		status = "degraded: " + err.Error()
+	}
+	writeJSON(w, map[string]string{"status": status, "service": "speedtest"})
 }
 
 // ListProfilesHandler — GET /api/profiles
