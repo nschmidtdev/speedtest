@@ -4,15 +4,63 @@
 async function loadTariffComparison(result) {
     const download = document.getElementById('tariff-download');
     const upload = document.getElementById('tariff-upload');
-    if (!download || !upload) return;
-    download.classList.add('hidden');
-    upload.classList.add('hidden');
+    const warningEl = document.getElementById('tariff-warning');
+    if (download) download.classList.add('hidden');
+    if (upload) upload.classList.add('hidden');
+    if (warningEl) warningEl.classList.add('hidden');
     if (!result?.id || !result?.tariff_id) return;
     const response = await fetch(`/api/tariff-comparison?result_id=${result.id}`);
     if (!response.ok) return;
     const comparison = await response.json();
     renderTariffMetric(download, comparison.download, comparison.tariff);
     renderTariffMetric(upload, comparison.upload, comparison.tariff);
+    updateTariffWarning(comparison, result);
+}
+
+// Tarif-Warnung bei Unterschreitung + Streak-Info
+function updateTariffWarning(comparison, result) {
+    const warningEl = document.getElementById('tariff-warning');
+    if (!warningEl) return;
+    const problems = [];
+    ['download', 'upload'].forEach(metric => {
+        const m = comparison[metric];
+        if (!m) return;
+        if (m.status === 'below_minimum' || m.status === 'below_normal') {
+            problems.push({metric: metric.charAt(0).toUpperCase() + metric.slice(1), ...m});
+        }
+    });
+    if (problems.length === 0) {
+        warningEl.classList.add('hidden');
+        return;
+    }
+    const worst = problems.some(p => p.status === 'below_minimum');
+    const title = worst ? 'Tarif wird deutlich unterschritten' : 'Tarif wird unterschritten';
+    const detail = problems.map(p =>
+        `${p.metric}: ${p.percent.toLocaleString('de-DE',{maximumFractionDigits:1})}% vom Tarif`
+    ).join(' · ');
+    warningEl.querySelector('.warning-title').textContent = title;
+    warningEl.querySelector('.warning-detail').textContent = detail;
+    warningEl.className = `tariff-warning ${worst ? 'severity-critical' : 'severity-warning'}`;
+
+    // Streak abfragen
+    const streakEl = warningEl.querySelector('.warning-streak');
+    if (result?.profile_id) {
+        fetch(`/api/tariff-streak?profile_id=${result.profile_id}&days=14`)
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+                if (!data || data.current_streak < 1) {
+                    streakEl.classList.add('hidden');
+                    return;
+                }
+                let text = `${data.current_streak}. Werktag in Folge unterschritten`;
+                if (data.ready_to_complain) {
+                    text += ' — Bedingungen für Mängelmeldung erfüllt (§41 TKG)';
+                }
+                streakEl.textContent = text;
+                streakEl.classList.remove('hidden');
+            })
+            .catch(() => streakEl.classList.add('hidden'));
+    }
 }
 
 function renderTariffMetric(element, metric, tariff) {
@@ -172,3 +220,34 @@ document.body.addEventListener('htmx:afterRequest', (e) => {
         }, 1500);
     }
 });
+
+// generateComplaint: Generiert ein §41 TKG-Beschwerdeschreiben.
+// Prüft vorher die gesetzliche Schwelle (2+ konsekutive Werktage).
+async function generateComplaint(profileId) {
+    if (!confirm(
+        'Es wird ein formales Beschwerdeschreiben mit Ihren Messdaten generiert.\n\n' +
+        'Dies ist KEINE Rechtsberatung. Die Messwerte sind Näherungswerte und ' +
+        'keine verbindliche Bandbreitenmessung. Nutzung auf eigene Verantwortung.\n\n' +
+        'Fortfahren?'
+    )) return;
+
+    try {
+        const res = await fetch(`/api/complaint?profile_id=${profileId}&days=30`);
+        if (res.status === 409) {
+            // Schwelle nicht erfüllt — klare Info statt generiertem Dokument
+            const err = await res.json();
+            showToast(err.error || 'Schwelle nicht erfüllt', 'warning');
+            return;
+        }
+        if (!res.ok) {
+            showToast('Fehler beim Generieren: ' + await res.text(), 'error');
+            return;
+        }
+        // HTML in neuem Tab öffnen
+        const html = await res.text();
+        const blob = new Blob([html], { type: 'text/html' });
+        window.open(URL.createObjectURL(blob), '_blank');
+    } catch (e) {
+        showToast('Netzwerkfehler: ' + e.message, 'error');
+    }
+}

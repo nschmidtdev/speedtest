@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mängelmeldung — {{.Provider}} {{.TariffName}}</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", system-ui, sans-serif;
+    color: #1a1a1a; background: #fff; max-width: 800px;
+    margin: 2rem auto; padding: 0 1.5rem; line-height: 1.6;
+  }
+  h1 { font-size: 1.25rem; margin-bottom: 0.25rem; }
+  h2 { font-size: 1rem; margin-top: 1.5rem; margin-bottom: 0.5rem; border-bottom: 1px solid #ddd; padding-bottom: 0.25rem; }
+  .header { margin-bottom: 1.5rem; }
+  .subject {
+    background: #f5f5f5; padding: 0.75rem 1rem; border-left: 3px solid #333;
+    margin: 1rem 0; font-weight: 600;
+  }
+  .contract-info { margin: 1rem 0; font-size: 0.9rem; }
+  .contract-info th { text-align: left; padding-right: 1rem; color: #666; font-weight: normal; vertical-align: top; }
+  table.data { width: 100%; border-collapse: collapse; margin: 0.75rem 0; font-size: 0.85rem; }
+  table.data th, table.data td { border: 1px solid #ddd; padding: 0.4rem 0.6rem; text-align: left; }
+  table.data th { background: #f8f8f8; }
+  table.data td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .demand ol { margin: 0.5rem 0; padding-left: 1.5rem; }
+  .demand li { margin-bottom: 0.3rem; }
+  .disclaimer {
+    margin-top: 2rem; padding: 0.75rem 1rem; background: #fff3cd;
+    border: 1px solid #ffc107; border-radius: 4px; font-size: 0.8rem; color: #555;
+  }
+  .toolbar { margin-bottom: 1.5rem; display: flex; gap: 0.5rem; }
+  .btn {
+    padding: 0.5rem 1rem; border: 1px solid #333; background: #333; color: #fff;
+    cursor: pointer; border-radius: 4px; font-size: 0.9rem;
+  }
+  .btn:hover { background: #555; }
+  .signature { margin-top: 2rem; }
+  .signature-line { margin-top: 2.5rem; border-top: 1px solid #333; width: 250px; padding-top: 0.25rem; font-size: 0.8rem; color: #666; }
+  .placeholder { color: #999; font-style: italic; }
+  @media print {
+    body { margin: 0; max-width: none; padding: 1cm; }
+    .toolbar { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button class="btn" onclick="window.print()">📄 Drucken / als PDF speichern</button>
+</div>
+
+<div class="header">
+  <p style="float:right; text-align:right; color:#666; font-size:0.85rem; margin:0;">
+    {{formatTime .GeneratedAt}}
+  </p>
+  <p style="font-size:0.85rem; color:#999; margin:0 0 1rem 0;">
+    <strong>Absender:</strong>
+    {{if or .SenderName .SenderStreet .SenderCity}}
+      <br>{{.SenderName}}
+      {{if .SenderStreet}}<br>{{.SenderStreet}}{{end}}
+      {{if .SenderCity}}<br>{{.SenderCity}}{{end}}
+      {{if .SenderPhone}}<br>Tel.: {{.SenderPhone}}{{end}}
+      {{if .SenderEmail}}<br>E-Mail: {{.SenderEmail}}{{end}}
+    {{else}}
+      <span class="placeholder">[Bitte in den Settings Absender-Adresse hinterlegen]</span>
+    {{end}}
+  </p>
+  <p style="font-size:0.85rem; color:#999; margin:0 0 1rem 0;">
+    <strong>Empfänger:</strong> {{.Provider}}<br>
+    Kundenservice / Beschwerdemanagement<br>
+    {{if or .ProviderStreet .ProviderCity}}
+      {{if .ProviderStreet}}{{.ProviderStreet}}<br>{{end}}
+      {{if .ProviderCity}}{{.ProviderCity}}{{end}}
+    {{else}}
+      <span class="placeholder">[Adresse des Anbieters in den Settings hinterlegen]</span>
+    {{end}}
+  </p>
+</div>
+
+<div class="subject">
+  Mängelmeldung gemäß § 41 TKG<br>
+  Wiederholte Unterschreitung der vertraglich zugesicherten Bandbreite
+</div>
+
+<div class="contract-info">
+  <table style="width:100%; font-size:0.9rem;">
+    <tr>
+      <th style="text-align:left; padding-right:1rem; color:#666;">Vertrag:</th>
+      <td>{{.Provider}} — {{.TariffName}}{{if .AccessTech}} ({{.AccessTech}}){{end}}</td>
+    </tr>
+    <tr>
+      <th style="text-align:left; padding-right:1rem; color:#666;">Geworbene Bandbreite:</th>
+      <td>{{printf "%.0f" .DownMbps}} / {{printf "%.0f" .UpMbps}} Mbit/s (Down/Up)</td>
+    </tr>
+    <tr>
+      <th style="text-align:left; padding-right:1rem; color:#666;">Normalwert:</th>
+      <td>
+        {{if .NormalIsEst}}
+          nicht vertraglich definiert — Schätzwert: {{printf "%.0f" .NormalDown}} / {{printf "%.0f" .NormalUp}} Mbit/s (90 % des Höchstwerts)
+        {{else}}
+          {{printf "%.0f" .NormalDown}} / {{printf "%.0f" .NormalUp}} Mbit/s
+        {{end}}
+      </td>
+    </tr>
+  </table>
+</div>
+
+<h2>Sachverhalt</h2>
+
+<p>
+  Sehr geehrte Damen und Herren,
+</p>
+
+<p>
+  hiermit melde ich einen Mangel im Sinne des § 41 Telekommunikationsgesetz (TKG).
+  Im Zeitraum der letzten {{.WindowDays}} Tage wurde die vertraglich
+  zugesicherte Bandbreite an <strong>{{.CurrentStreak}} aufeinanderfolgenden
+  Werktagen</strong> (Mo–Sa) erheblich unterschritten.
+</p>
+
+<p style="font-size:0.85rem; color:#666;">
+  Betroffene Werktage insgesamt im Zeitraum: {{.TotalBelow}}<br>
+  Aktuelle Strähne: {{.CurrentStreak}} Werktag(e) in Folge
+</p>
+
+<p>
+  Die nachfolgende Tabelle zeigt die Tagesmittelwerte der von mir
+  durchgeführten Messungen an den betroffenen Tagen:
+</p>
+
+<table class="data">
+  <thead>
+    <tr>
+      <th>Datum</th>
+      <th>Tag</th>
+      <th class="num">↓ Mbit/s (Mittel)</th>
+      <th class="num">↑ Mbit/s (Mittel)</th>
+      <th class="num">↓ % vom Normalwert</th>
+      <th class="num">↑ % vom Normalwert</th>
+    </tr>
+  </thead>
+  <tbody>
+    {{range .Rows}}
+    <tr>
+      <td>{{.Date}}</td>
+      <td>{{.Weekday}}</td>
+      <td class="num">{{printf "%.1f" .DownAvg}}</td>
+      <td class="num">{{printf "%.1f" .UpAvg}}</td>
+      <td class="num">{{if .DownBelow}}<strong>{{end}}{{printf "%.0f" .DownPct}} %{{if .DownBelow}}</strong>{{end}}</td>
+      <td class="num">{{if .UpBelow}}<strong>{{end}}{{printf "%.0f" .UpPct}} %{{if .UpBelow}}</strong>{{end}}</td>
+    </tr>
+    {{end}}
+  </tbody>
+</table>
+
+<h2>Rechtliche Grundlage (§ 41 TKG)</h2>
+
+<p style="font-size:0.85rem;">
+  Nach § 41 Abs. 2 TKG hat ein Anbieter bei erheblichen, für mindestens zwei
+  aufeinanderfolgende Werktage andauernden Abweichungen der tatsächlich
+  erreichbaren Bitrate von der vertraglich vereinbarten Bitrate auf Verlangen
+  eine angemessene Vergütung zu gewähren. Eine erhebliche Abweichung liegt
+  vor, wenn die Normalwerte nicht erreicht werden.
+</p>
+
+<h2>Forderung</h2>
+
+<div class="demand">
+  <ol>
+    <li>Herstellung der vertragsgemäßen Leistung innerhalb angemessener Frist</li>
+    <li>Schriftliche Stellungnahme zu diesem Mangel binnen 14 Tagen</li>
+    <li>Vergütung des defizitären Zeitraums gemäß § 41 Abs. 2 TKG</li>
+  </ol>
+</div>
+
+<p>
+  Sollte der Mangel nicht innerhalb angemessener Frist behoben werden, behalte
+  ich mir weitere rechtliche Schritte vor, einschließlich einer Sonderkündigung
+  gemäß § 41 Abs. 3 TKG.
+</p>
+
+<div class="signature">
+  Mit freundlichen Grüßen
+  <div class="signature-line">{{if .SenderName}}{{.SenderName}}{{else}}[Ihr Name]{{end}}</div>
+</div>
+
+<div class="disclaimer">
+  <strong>⚠️ Haftungsausschluss:</strong>
+  Dieses Dokument wurde automatisch auf Basis von Selbstmessungen generiert.
+  Es handelt sich <strong>nicht um eine Rechtsberatung</strong>.
+  Die Messwerte sind technische Näherungswerte und stellen keine verbindliche
+  Bandbreitenmessung im Sinne der einschlägigen Richtlinien dar.
+  Die Bandbreitenmessung hängt von vielen Faktoren ab (Testserverauswahl,
+  Tageszeit, verwendete Hardware, Netzwerkauslastung).
+  Die Nutzung dieses Dokuments erfolgt auf eigene Verantwortung.
+  Für rechtliche Beratung wenden Sie sich an eine Anwaltskanzlei oder
+  die Verbraucherzentrale Bundesverband (vzbv).
+</div>
+
+</body>
+</html>

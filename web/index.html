@@ -72,6 +72,15 @@
                         <div class="result-unit">ms</div>
                     </div>
                 </div>
+                <!-- Tarif-Warnung bei Unterschreitung -->
+                <div id="tariff-warning" class="tariff-warning hidden">
+                    <div class="warning-icon">⚠️</div>
+                    <div class="warning-content">
+                        <div class="warning-title"></div>
+                        <div class="warning-detail"></div>
+                        <div class="warning-streak hidden"></div>
+                    </div>
+                </div>
                 <div id="result-extras" class="result-grid hidden">
                     <div class="result-card result-card-wide">
                         <div class="result-label">Bufferbloat</div>
@@ -170,6 +179,47 @@
             <section id="tab-settings" class="tab-content">
                 <h2>Settings</h2>
                 <div class="settings-section">
+                    <h3>📬 Absender-Adresse & Anbieter-Fallback (Mängelmeldung)</h3>
+                    <p class="settings-help">Die Adresse bekannter Anbieter wird automatisch aus dem Anbieter-Katalog eingesetzt. Diese Anbieterfelder dienen nur als Fallback für eigene oder noch nicht katalogisierte Anbieter.</p>
+                    <form id="settings-address-form" class="settings-address-form">
+                        <fieldset class="settings-fieldset">
+                            <legend>Absender (Sie)</legend>
+                            <div class="settings-address-grid">
+                                <label>Vor- und Nachname
+                                    <input type="text" name="complaint_name" placeholder="Max Mustermann" autocomplete="name">
+                                </label>
+                                <label>Telefon (optional)
+                                    <input type="tel" name="complaint_phone" placeholder="0151 1234567" autocomplete="tel">
+                                </label>
+                                <label>Straße und Hausnummer
+                                    <input type="text" name="complaint_street" placeholder="Musterstraße 1" autocomplete="street-address">
+                                </label>
+                                <label>E-Mail (optional)
+                                    <input type="email" name="complaint_email" placeholder="max@example.com" autocomplete="email">
+                                </label>
+                                <label>PLZ und Ort
+                                    <input type="text" name="complaint_city" placeholder="12345 Musterstadt" autocomplete="address-level2">
+                                </label>
+                            </div>
+                        </fieldset>
+                        <fieldset class="settings-fieldset">
+                            <legend>Empfänger (Anbieter — deutscher Sitz)</legend>
+                            <div class="settings-address-grid">
+                                <label>Straße und Hausnummer
+                                    <input type="text" name="complaint_provider_street" placeholder="z. B. Wanheimer Straße 80">
+                                </label>
+                                <label>PLZ und Ort
+                                    <input type="text" name="complaint_provider_city" placeholder="z. B. 40878 Ratingen">
+                                </label>
+                            </div>
+                        </fieldset>
+                        <div class="tariff-actions">
+                            <span id="settings-address-status"></span>
+                            <button class="btn btn-primary" type="submit">Speichern</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="settings-section">
                     <h3>Allgemein</h3>
                     <p class="setting-item"><strong>Port:</strong> <span id="setting-port">8080</span></p>
                 </div>
@@ -254,5 +304,6 @@
     <script src="/js/live.js"></script>
     <script src="/js/history.js"></script>
     <script src="/js/profiles.js"></script>
+    <script src="/js/settings.js"></script>
 </body>
 </html>

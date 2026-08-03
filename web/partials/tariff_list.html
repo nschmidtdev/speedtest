@@ -11,6 +11,7 @@
   </div>
   <div class="tariff-card-actions">
     <button type="button" class="btn btn-sm btn-secondary" onclick="editTariff({{.ID}})">Bearbeiten</button>
+    <button type="button" class="btn btn-sm btn-secondary" onclick="generateComplaint({{.ProfileID}})" title="Mängelmeldung nach §41 TKG generieren">Abmahnung</button>
     <button type="button" class="btn btn-sm btn-danger" onclick="deleteTariff({{.ID}}, '{{.Name}}')">Löschen</button>
   </div>
 </article>

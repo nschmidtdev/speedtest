@@ -155,7 +155,8 @@ function renderHistoryTable(results) {
 function historyTariffDeviation(percent, deviation, status) {
     if (!status || status === 'insufficient_data') return '';
     const signed = `${deviation > 0 ? '+' : ''}${Number(deviation).toLocaleString('de-DE', {maximumFractionDigits: 1})}`.replace('-', '−');
-    return `<small class="history-tariff tariff-${status}">${Number(percent).toLocaleString('de-DE', {maximumFractionDigits: 1})} % · ${signed}</small>`;
+    const icon = status === 'below_minimum' ? '🔴' : status === 'below_normal' ? '⚠️' : '';
+    return `<small class="history-tariff tariff-${status}">${icon} ${Number(percent).toLocaleString('de-DE', {maximumFractionDigits: 1})} % · ${signed}</small>`;
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -73,6 +73,12 @@ CREATE TABLE IF NOT EXISTS tariffs (
 CREATE INDEX IF NOT EXISTS idx_tariffs_profile_period ON tariffs(profile_id, valid_from DESC);
 CREATE INDEX IF NOT EXISTS idx_results_profile_time ON results(profile_id, measured_at DESC);
 CREATE INDEX IF NOT EXISTS idx_results_time ON results(measured_at DESC);
+
+CREATE TABLE IF NOT EXISTS settings (
+    key         TEXT PRIMARY KEY,
+    value       TEXT NOT NULL DEFAULT '',
+    updated_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
 `
 
 // Open öffnet die SQLite-Datenbank und führt Migrationen aus.

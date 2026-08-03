@@ -17,6 +17,10 @@ Single Binary, keine externen Abhängigkeiten, eingebautes Web-Dashboard.
   - Persistierte Abweichungssnapshots pro Messung
   - Automatische Backfill-Migration für bestehende Daten
   - Tarifversionierung — alte Messungen bleiben korrekt zugeordnet
+  - Live-Warnung bei Unterschreitung mit konsekutiver Werktag-Strähne
+  - **Mängelmeldung-Generator (§41 TKG)** — erstellt ein formales Beschwerdeschreiben,
+    wenn die gesetzliche Schwelle erfüllt ist (mindestens 2 aufeinanderfolgende Werktage).
+    Nutzung auf eigene Verantwortung — keine Rechtsberatung.
 - **Live-Dashboard** mit SSE-Push (Server-Sent Events) für Echtzeit-Updates während des Tests
 - **Dark-Mode** UI mit Ring-Charts, Zeitreihen und Today-Verlauf
 - **Docker-Support** inkl. Dockerfile und Compose-Setup
@@ -99,3 +103,5 @@ Dieses Projekt nutzt die folgenden Open-Source-Bibliotheken:
 ---
 
 **Haftungsausschluss:** Diese Software wird "wie besehen" ohne jegliche Gewährleistung bereitgestellt. Der Autor haftet nicht für Schäden, die aus der Nutzung entstehen. Speedtest-Messungen sind Näherungswerte und hängen von vielen Faktoren ab (Serverauswahl, Tageszeit, verwendete Hardware). Sie stellen keine verbindliche Bandbreitenmessung im Sinne der Telekom-Richtlinie dar.
+
+Der Mängelmeldung-Generator erstellt ein formales Beschwerdeschreiben auf Basis dieser Näherungswerte. Dies ist **keine Rechtsberatung** — für rechtliche Beratung wenden Sie sich an eine Anwaltskanzlei oder die Verbraucherzentrale (vzbv). Die Nutzung erfolgt auf eigene Verantwortung.

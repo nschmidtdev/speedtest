@@ -1,5 +1,7 @@
 package tariff
 
+import "strings"
+
 // CatalogData is the locally embedded tariff-template catalog.
 type CatalogData struct {
 	VerifiedAt string            `json:"verified_at"`
@@ -8,10 +10,12 @@ type CatalogData struct {
 }
 
 type CatalogProvider struct {
-	ID        string          `json:"id"`
-	Name      string          `json:"name"`
-	SourceURL string          `json:"source_url"`
-	Tariffs   []CatalogTariff `json:"tariffs"`
+	ID            string          `json:"id"`
+	Name          string          `json:"name"`
+	SourceURL     string          `json:"source_url"`
+	AddressStreet string          `json:"address_street"`
+	AddressCity   string          `json:"address_city"`
+	Tariffs       []CatalogTariff `json:"tariffs"`
 }
 
 type CatalogTariff struct {
@@ -33,7 +37,8 @@ func Catalog() CatalogData {
 		Providers: []CatalogProvider{
 			{
 				ID: "telekom", Name: "Deutsche Telekom",
-				SourceURL: "https://www.telekom.de/shop/tarife/internet-tarife",
+				SourceURL:     "https://www.telekom.de/shop/tarife/internet-tarife",
+				AddressStreet: "Landgrabenweg 151", AddressCity: "53227 Bonn",
 				Tariffs: []CatalogTariff{
 					{ID: "telekom-mz-s", Name: "MagentaZuhause S", AccessTechnology: "DSL", AdvertisedDownMbps: 16, AdvertisedUpMbps: 2.4},
 					{ID: "telekom-mz-m", Name: "MagentaZuhause M", AccessTechnology: "DSL", AdvertisedDownMbps: 50, AdvertisedUpMbps: 10},
@@ -47,7 +52,8 @@ func Catalog() CatalogData {
 			},
 			{
 				ID: "vodafone", Name: "Vodafone",
-				SourceURL: "https://www.vodafone.de/privat/internet.html",
+				SourceURL:     "https://www.vodafone.de/privat/internet.html",
+				AddressStreet: "Ferdinand-Braun-Platz 1", AddressCity: "40549 Düsseldorf",
 				Tariffs: []CatalogTariff{
 					variableUpload("vodafone-internet-50", "Internet 50", 50),
 					variableUpload("vodafone-internet-150", "Internet 150", 150),
@@ -58,7 +64,8 @@ func Catalog() CatalogData {
 			},
 			{
 				ID: "o2", Name: "O2 Telefónica",
-				SourceURL: "https://www.o2online.de/internet-festnetz/",
+				SourceURL:     "https://www.o2online.de/internet-festnetz/",
+				AddressStreet: "Georg-Brauchle-Ring 50-52", AddressCity: "80992 München",
 				Tariffs: []CatalogTariff{
 					variableUpload("o2-home-s", "O2 Home S", 50),
 					variableUpload("o2-home-m", "O2 Home M", 150),
@@ -69,7 +76,8 @@ func Catalog() CatalogData {
 			},
 			{
 				ID: "1und1", Name: "1&1",
-				SourceURL: "https://dsl.1und1.de/",
+				SourceURL:     "https://dsl.1und1.de/",
+				AddressStreet: "Elgendorfer Straße 57", AddressCity: "56410 Montabaur",
 				Tariffs: []CatalogTariff{
 					{ID: "1und1-dsl-16", Name: "1&1 DSL 16", AccessTechnology: "DSL", AdvertisedDownMbps: 16, AdvertisedUpMbps: 1},
 					{ID: "1und1-dsl-50", Name: "1&1 DSL 50", AccessTechnology: "DSL", AdvertisedDownMbps: 50, AdvertisedUpMbps: 20},
@@ -79,7 +87,8 @@ func Catalog() CatalogData {
 			},
 			{
 				ID: "deutsche-glasfaser", Name: "Deutsche Glasfaser",
-				SourceURL: "https://www.deutsche-glasfaser.de/tarife",
+				SourceURL:     "https://www.deutsche-glasfaser.de/tarife",
+				AddressStreet: "Tulpenweg 16-18", AddressCity: "33428 Harsewinkel",
 				Tariffs: []CatalogTariff{
 					{ID: "dg-basic-100", Name: "DG basic 100", AccessTechnology: "Glasfaser", AdvertisedDownMbps: 100, AdvertisedUpMbps: 50},
 					{ID: "dg-classic-300", Name: "DG classic 300", AccessTechnology: "Glasfaser", AdvertisedDownMbps: 300, AdvertisedUpMbps: 150},
@@ -104,4 +113,16 @@ func FindCatalogTariff(id string) (CatalogProvider, CatalogTariff, bool) {
 		}
 	}
 	return CatalogProvider{}, CatalogTariff{}, false
+}
+
+// FindCatalogProvider sucht einen Anbieter anhand des gespeicherten Namens
+// oder der Katalog-ID. Unbekannte manuelle Anbieter liefern false.
+func FindCatalogProvider(name string) (CatalogProvider, bool) {
+	name = strings.ToLower(strings.TrimSpace(name))
+	for _, provider := range Catalog().Providers {
+		if strings.ToLower(provider.Name) == name || strings.ToLower(provider.ID) == name {
+			return provider, true
+		}
+	}
+	return CatalogProvider{}, false
 }

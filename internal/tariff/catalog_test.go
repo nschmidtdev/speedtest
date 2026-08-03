@@ -56,3 +56,17 @@ func TestCatalogMarksVariableUploadInsteadOfInventingValue(t *testing.T) {
 		t.Fatalf("variable upload must require user input: %#v", plan)
 	}
 }
+
+func TestCatalogProviderAddressLookup(t *testing.T) {
+	provider, ok := FindCatalogProvider("Vodafone")
+	if !ok {
+		t.Fatal("expected Vodafone provider")
+	}
+	if provider.AddressStreet != "Ferdinand-Braun-Platz 1" || provider.AddressCity != "40549 Düsseldorf" {
+		t.Fatalf("unexpected Vodafone address: %#v", provider)
+	}
+
+	if _, ok := FindCatalogProvider("UnknownNet"); ok {
+		t.Fatal("unknown provider must use manual fallback")
+	}
+}
