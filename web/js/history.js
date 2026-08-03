@@ -1,10 +1,19 @@
 // history.js — Historie-Ansicht, Chart + Tabelle
 
 let historyChart = null;
+let profileNames = {};
 
 async function loadHistoryData() {
     const range = document.getElementById('history-range')?.value || '24h';
     const profileId = document.getElementById('history-profile')?.value || '';
+
+    // Profilnamen für die Tabelle laden (einmalig)
+    if (Object.keys(profileNames).length === 0) {
+        try {
+            const profiles = await API.get('/api/profiles');
+            profiles.forEach(p => profileNames[p.id] = p.name);
+        } catch (e) { /* ignore */ }
+    }
 
     const params = new URLSearchParams({ limit: '500', range });
     if (profileId) params.set('profile_id', profileId);
@@ -133,7 +142,7 @@ function renderHistoryTable(results) {
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${formatTime(r.measured_at)}</td>
-            <td>${r.profile_id || '—'}</td>
+            <td>${profileNames[r.profile_id] || r.profile_id || '—'}</td>
             <td>${fmt(r.download_mbps)}${historyTariffDeviation(r.tariff_down_percent, r.tariff_down_deviation_mbps, r.tariff_down_status)}</td>
             <td>${fmt(r.upload_mbps)}${historyTariffDeviation(r.tariff_up_percent, r.tariff_up_deviation_mbps, r.tariff_up_status)}</td>
             <td>${fmt(r.ping_ms)}</td>

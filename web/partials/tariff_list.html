@@ -1,0 +1,20 @@
+{{range .}}
+<article class="tariff-card">
+  <div>
+    <span class="tariff-profile">{{.ProfileName}}</span>
+    <h4>{{.Provider}} · {{.Name}}</h4>
+    <small>{{if .AccessTechnology}}{{.AccessTechnology}}{{else}}Anschlussart offen{{end}} · gültig seit {{formatTime .ValidFrom}}</small>
+  </div>
+  <div class="tariff-speeds">
+    <span>↓ <strong>{{printf "%.0f" .AdvertisedDownMbps}} Mbps</strong>{{$n := .NormalDownMbps}}{{if $n}}<small>normal {{printf "%.0f" $n}}</small>{{end}}</span>
+    <span>↑ <strong>{{printf "%.0f" .AdvertisedUpMbps}} Mbps</strong>{{$n := .NormalUpMbps}}{{if $n}}<small>normal {{printf "%.0f" $n}}</small>{{end}}</span>
+  </div>
+  <div class="tariff-card-actions">
+    <button type="button" class="btn btn-sm btn-secondary" onclick="editTariff({{.ID}})">Bearbeiten</button>
+    <button type="button" class="btn btn-sm btn-danger" onclick="deleteTariff({{.ID}}, '{{.Name}}')">Löschen</button>
+  </div>
+</article>
+{{end}}
+{{if eq (len .) 0}}
+<p class="coming-soon">Noch kein Tarif hinterlegt. Alte Messungen bleiben ohne Tarifvergleich.</p>
+{{end}}

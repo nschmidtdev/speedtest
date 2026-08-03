@@ -1,12 +1,36 @@
 // profiles.js — Profile CRUD UI + Editor Dialog + Server Selection
+// Die Profil-Liste wird per HTMX geladen (#profile-list). Dieser JS-Code
+// übernimmt Event-Delegation für die Buttons/Toggles in der HTMX-Liste und
+// steuert den Editor-Dialog (komplex: Server-Auswahl, Cron-Presets).
 
 let availableServers = [];
 let editingProfileId = null;
 
-async function loadProfiles() {
+// Event-Delegation: funktioniert auch nach HTMX-Reloads der Liste.
+document.addEventListener('click', (e) => {
+    // Edit-Button oder Klick auf die Karte
+    const editEl = e.target.closest('[data-edit-id]');
+    if (editEl && !e.target.classList.contains('toggle-enable')) {
+        const id = parseInt(editEl.dataset.editId);
+        openProfileEditor(id);
+        return;
+    }
+});
+
+document.addEventListener('change', (e) => {
+    if (e.target.classList.contains('toggle-enable')) {
+        const id = e.target.dataset.profileId;
+        const enabled = e.target.checked;
+        API.post(`/api/profiles/${id}/${enabled ? 'enable' : 'disable'}`);
+    }
+});
+
+// Neue-Profile-Button (HTMX-basiert im index.html)
+
+// Profile für die History-Dropdowns nachladen (nur Datensync, kein Rendering)
+async function syncProfileDropdowns() {
     try {
         const profiles = await API.get('/api/profiles');
-        renderProfileList(profiles);
         const histSelect = document.getElementById('history-profile');
         if (histSelect) {
             histSelect.innerHTML = '<option value="">Alle Profile</option>';
@@ -18,68 +42,8 @@ async function loadProfiles() {
             });
         }
     } catch (e) {
-        console.error('Failed to load profiles:', e);
+        console.error('Failed to sync profile dropdowns:', e);
     }
-}
-
-function renderProfileList(profiles) {
-    const container = document.getElementById('profile-list');
-    container.innerHTML = '';
-
-    if (!profiles || profiles.length === 0) {
-        container.innerHTML = '<p class="coming-soon">Keine Profile vorhanden.</p>';
-        return;
-    }
-
-    profiles.forEach(p => {
-        const card = document.createElement('div');
-        card.className = 'profile-card';
-
-        const modeLabel = { auto: 'Auto', random: 'Random', fixed: 'Fixed' }[p.server_mode] || 'Auto';
-        const serverInfo = p.server_mode === 'auto' ? 'Ookla wählt'
-            : `${p.server_ids?.length || 0} Server ausgewählt`;
-
-        card.innerHTML = `
-            <div style="display:flex;justify-content:space-between;align-items:start;">
-                <div class="profile-card-left" style="cursor:pointer;" data-edit-id="${p.id}">
-                    <h3>${escapeHtml(p.name)}</h3>
-                    <div class="profile-meta">
-                        <span>📁 ${p.cron_expr || 'Manuell'}</span>
-                        <span>🧮 ${p.metrics?.length || 0} Metriken</span>
-                        <span>🖥 ${modeLabel}: ${serverInfo}</span>
-                    </div>
-                    <div class="profile-metrics">
-                        ${(p.metrics || []).map(m => `<span class="metric-tag">${m}</span>`).join('')}
-                    </div>
-                </div>
-                <div style="display:flex;flex-direction:column;align-items:end;gap:8px;">
-                    <label class="toggle">
-                        <input type="checkbox" ${p.enabled ? 'checked' : ''} data-profile-id="${p.id}" class="toggle-enable" />
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <button class="btn btn-sm btn-secondary" data-edit-id="${p.id}">Bearbeiten</button>
-                </div>
-            </div>
-        `;
-        container.appendChild(card);
-    });
-
-    // Toggle-Handler
-    document.querySelectorAll('.toggle-enable').forEach(toggle => {
-        toggle.addEventListener('change', async (e) => {
-            const id = e.target.dataset.profileId;
-            const enabled = e.target.checked;
-            await API.post(`/api/profiles/${id}/${enabled ? 'enable' : 'disable'}`);
-        });
-    });
-
-    // Edit-Handler
-    document.querySelectorAll('[data-edit-id]').forEach(el => {
-        el.addEventListener('click', (e) => {
-            const id = parseInt(e.currentTarget.dataset.editId);
-            openProfileEditor(id);
-        });
-    });
 }
 
 // === Profile Editor Dialog ===
@@ -260,7 +224,7 @@ function showProfileDialog(p) {
         try {
             await API.del(`/api/profiles/${editingProfileId}`);
             closeProfileDialog();
-            loadProfiles();
+            reloadProfileList();
         } catch (e) { alert('Löschen fehlgeschlagen: ' + e.message); }
     });
 }
@@ -269,7 +233,6 @@ function renderServerCheckboxes(servers, selectedIDs) {
     if (!servers || servers.length === 0) {
         return '<p class="coming-soon">Keine Server verfügbar. Cache wird beim ersten Test geladen.</p>';
     }
-    // Parse server IDs from the API (they may be string IDs in Ookla)
     const selectedSet = new Set((selectedIDs || []).map(String));
     return servers.map(s => {
         const id = s.id;
@@ -342,9 +305,18 @@ async function saveProfile() {
             await API.post('/api/profiles', profile);
         }
         closeProfileDialog();
-        loadProfiles();
+        reloadProfileList();
+        syncProfileDropdowns();
     } catch (e) {
         alert('Speichern fehlgeschlagen: ' + e.message);
+    }
+}
+
+// reloadProfileList löst einen HTMX-Reload der Profilliste aus.
+function reloadProfileList() {
+    const list = document.getElementById('profile-list');
+    if (list) {
+        htmx.trigger(list, 'reload');
     }
 }
 
@@ -354,16 +326,6 @@ function closeProfileDialog() {
     editingProfileId = null;
 }
 
-// Local escapeHtml fallback if app.js hasn't loaded yet
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text || '';
-    return div.innerHTML;
-}
-
 document.addEventListener('DOMContentLoaded', () => {
-    const btn = document.getElementById('btn-new-profile');
-    if (btn) {
-        btn.addEventListener('click', () => openProfileEditor(null));
-    }
+    syncProfileDropdowns();
 });

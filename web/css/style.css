@@ -26,6 +26,7 @@ body {
     background: var(--bg);
     color: var(--text);
     min-height: 100vh;
+    color-scheme: dark;
 }
 
 #app {
@@ -843,21 +844,28 @@ body {
 .settings-help { color: var(--text-dim); margin: -2px 0 8px; font-size: .9rem; }
 .tariff-catalog-meta { color: var(--text-dim); margin: 0 0 18px; font-size: .78rem; }
 .tariff-catalog-meta a { color: #60a5fa; }
-.tariff-form { display: grid; gap: 18px; }
-.tariff-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.tariff-form label { display: grid; gap: 6px; color: var(--text-dim); font-size: .82rem; }
+.tariff-form { display: grid; gap: 22px; }
+.tariff-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.tariff-form label { display: grid; gap: 8px; color: var(--text-dim); font-size: .88rem; }
 .tariff-form input, .tariff-form select {
     width: 100%; box-sizing: border-box; background: var(--bg-body); color: var(--text);
-    border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; font: inherit;
+    border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; font: inherit; font-size: .95rem;
 }
-.tariff-form input:focus, .tariff-form select:focus { outline: none; border-color: var(--accent); }
-.tariff-speed-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
-.tariff-speed-grid > div { background: rgba(255,255,255,.025); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
-.tariff-speed-grid > div > strong { display: block; margin-bottom: 10px; }
-.tariff-speed-grid label { grid-template-columns: 72px 1fr 44px; align-items: center; margin-top: 7px; }
-.tariff-speed-grid label span { font-size: .72rem; }
-.tariff-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 40px; }
-.tariff-actions span { color: var(--text-dim); font-size: .85rem; }
+.tariff-form input:focus, .tariff-form select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,.15); }
+/* Dark dropdowns: native <option> im Browser-Windows Darkmode erzwingen */
+.tariff-form select option,
+.profile-select option { background: var(--bg-card); color: var(--text); }
+/* color-scheme sorgt dafür, dass der Browser native Controls dunkel rendert */
+.tariff-form select { color-scheme: dark; }
+.tariff-speed-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.tariff-speed-grid > div { background: rgba(255,255,255,.025); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
+.tariff-speed-grid > div > strong { display: block; margin-bottom: 14px; font-size: 1rem; }
+.tariff-speed-grid label { grid-template-columns: 80px 1fr 48px; align-items: center; margin-top: 10px; }
+.tariff-speed-grid input { padding: 10px 12px !important; }
+.tariff-speed-grid label span { font-size: .78rem; }
+.tariff-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 44px; }
+.tariff-actions span { color: var(--text-dim); font-size: .88rem; }
+.form-error { color: #fca5a5; font-size: .85rem; }
 .tariff-success { color: #86efac !important; }
 .tariff-error { color: #fca5a5 !important; }
 .active-tariffs { display: grid; gap: 10px; margin-top: 20px; }
@@ -868,6 +876,12 @@ body {
 .tariff-speeds { display: grid; gap: 5px; min-width: 210px; }
 .tariff-speeds span { font-size: .85rem; }
 .tariff-speeds small { display: block; margin-left: 18px; }
+.tariff-card-actions { display: grid; gap: 6px; }
+.btn-sm { padding: 5px 10px; font-size: .78rem; border-radius: 6px; }
+.btn-danger { background: rgba(239,68,68,.15); color: #fca5a5; border: 1px solid rgba(239,68,68,.3); cursor: pointer; }
+.btn-danger:hover { background: rgba(239,68,68,.25); }
+.btn-secondary { background: rgba(255,255,255,.05); color: var(--text); border: 1px solid var(--border); cursor: pointer; }
+.btn-secondary:hover { background: rgba(255,255,255,.1); }
 
 /* Dashboard statistics */
 .dashboard-header, .dashboard-chart-header {

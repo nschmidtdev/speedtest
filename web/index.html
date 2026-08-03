@@ -159,9 +159,11 @@
             <section id="tab-profiles" class="tab-content">
                 <div class="profile-header">
                     <h2>Test-Profile</h2>
-                    <button id="btn-new-profile" class="btn btn-primary">+ Neues Profil</button>
+                    <button class="btn btn-primary" onclick="openProfileEditor(null)">+ Neues Profil</button>
                 </div>
-                <div id="profile-list" class="profile-list"></div>
+                <div id="profile-list" class="profile-list" hx-get="/api/profiles" hx-trigger="load, reload" hx-swap="innerHTML">
+                    <p class="coming-soon">Profile werden geladen …</p>
+                </div>
             </section>
 
             <!-- Settings Tab -->
@@ -175,26 +177,53 @@
                     <h3>📶 Anbieter & Tarif</h3>
                     <p class="settings-help">Hinterlege die vertraglichen Geschwindigkeiten eines Messprofils. Eine Änderung wird als neue Tarifversion gespeichert, damit alte Messungen korrekt vergleichbar bleiben.</p>
                     <p id="tariff-catalog-meta" class="tariff-catalog-meta">Tarifkatalog wird geladen …</p>
-                    <form id="tariff-form" class="tariff-form">
+                    <form class="tariff-form" hx-post="/api/tariffs" hx-target="#active-tariffs" hx-swap="innerHTML" hx-indicator="#tariff-form-status">
                         <div class="tariff-form-grid">
-                            <label>Messprofil<select id="tariff-profile" required><option value="">Profil wählen …</option></select></label>
+                            <label>Messprofil
+                                <select name="profile_id" required hx-get="/api/profile/options" hx-target="this" hx-trigger="load" hx-swap="innerHTML"></select>
+                            </label>
                             <label>Anbieter
-                                <select id="tariff-provider-select" required><option value="">Anbieter wählen …</option></select>
-                                <input id="tariff-provider" class="hidden" type="text" placeholder="Eigenen Anbieter eingeben">
+                                <select name="provider_select" required hx-get="/api/tariff/providers" hx-target="this" hx-trigger="load" hx-swap="innerHTML"
+                                        hx-on:change="this.nextElementSibling.classList.toggle('hidden', this.value !== '__custom')"></select>
+                                <input class="hidden" type="text" name="provider" placeholder="Eigenen Anbieter eingeben">
                             </label>
                             <label>Tarif
-                                <select id="tariff-template" required><option value="">Zuerst Anbieter wählen …</option></select>
-                                <input id="tariff-name" class="hidden" type="text" placeholder="Eigenen Tarifnamen eingeben">
+                                <select name="tariff_template" hx-target="this"
+                                        hx-trigger="load, change from:[name='provider_select']"
+                                        hx-get="/api/tariff/options"
+                                        hx-vals='js:{provider_id: document.querySelector("[name=provider_select]").value}'
+                                        hx-swap="innerHTML"
+                                        hx-on:change="applyCatalogTariff(this.value); this.nextElementSibling.classList.toggle('hidden', this.value !== '__custom'); if(this.value !== '__custom' && this.value !== '') { document.querySelector('[name=name]').value=this.value; }"></select>
+                                <input class="hidden" type="text" name="name" placeholder="Eigenen Tarifnamen eingeben">
                             </label>
-                            <label>Anschlussart<select id="tariff-technology"><option value="">Nicht angegeben</option><option>DSL</option><option>Kabel</option><option>Glasfaser</option><option>Mobilfunk</option><option>Satellit</option></select></label>
+                            <label>Anschlussart
+                                <select name="access_technology">
+                                    <option value="">Nicht angegeben</option>
+                                    <option value="DSL">DSL</option>
+                                    <option value="Kabel">Kabel</option>
+                                    <option value="Glasfaser">Glasfaser</option>
+                                    <option value="Mobilfunk">Mobilfunk</option>
+                                    <option value="Satellit">Satellit</option>
+                                </select>
+                            </label>
                         </div>
                         <div class="tariff-speed-grid">
-                            <div><strong>Download</strong><label>Maximum<input id="tariff-down-max" type="number" min="0.01" step="0.01" required><span>Mbps</span></label><label>Normal<input id="tariff-down-normal" type="number" min="0" step="0.01"><span>Mbps</span></label><label>Minimum<input id="tariff-down-min" type="number" min="0" step="0.01"><span>Mbps</span></label></div>
-                            <div><strong>Upload</strong><label>Maximum<input id="tariff-up-max" type="number" min="0.01" step="0.01" required><span>Mbps</span></label><label>Normal<input id="tariff-up-normal" type="number" min="0" step="0.01"><span>Mbps</span></label><label>Minimum<input id="tariff-up-min" type="number" min="0" step="0.01"><span>Mbps</span></label></div>
+                            <div><strong>Download</strong>
+                                <label>Maximum<input name="advertised_down_mbps" type="number" min="0.01" step="0.01" required><span>Mbps</span></label>
+                                <label>Normal<input name="normal_down_mbps" type="number" min="0" step="0.01"><span>Mbps</span></label>
+                                <label>Minimum<input name="minimum_down_mbps" type="number" min="0" step="0.01"><span>Mbps</span></label>
+                            </div>
+                            <div><strong>Upload</strong>
+                                <label>Maximum<input name="advertised_up_mbps" type="number" min="0.01" step="0.01" required><span>Mbps</span></label>
+                                <label>Normal<input name="normal_up_mbps" type="number" min="0" step="0.01"><span>Mbps</span></label>
+                                <label>Minimum<input name="minimum_up_mbps" type="number" min="0" step="0.01"><span>Mbps</span></label>
+                            </div>
                         </div>
                         <div class="tariff-actions"><span id="tariff-form-status"></span><button class="btn btn-primary" type="submit">Tarif speichern</button></div>
                     </form>
-                    <div id="active-tariffs" class="active-tariffs"></div>
+                    <div id="active-tariffs" class="active-tariffs" hx-get="/api/tariffs" hx-trigger="load" hx-swap="innerHTML">
+                        <p class="coming-soon">Tarife werden geladen …</p>
+                    </div>
                 </div>
                 <div class="settings-section">
                     <h3>🕐 Scheduler</h3>
@@ -219,6 +248,7 @@
     <div id="toast-container" class="toast-container"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.3"></script>
     <script src="/js/app.js"></script>
     <script src="/js/tariffs.js"></script>
     <script src="/js/live.js"></script>

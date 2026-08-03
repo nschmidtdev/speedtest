@@ -32,7 +32,6 @@ type SpeedtestEngine struct {
 func NewSpeedtestEngine() *SpeedtestEngine {
 	client := speedtest.New(
 		speedtest.WithUserConfig(&speedtest.UserConfig{
-			UserAgent:      "SpeedtestDashboard/0.1",
 			PingMode:       speedtest.HTTP,
 			MaxConnections: 8,
 		}),

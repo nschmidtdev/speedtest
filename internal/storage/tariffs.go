@@ -94,6 +94,29 @@ func GetTariffByID(db *sql.DB, id int64) (*tariff.Tariff, error) {
 	return scanTariff(row)
 }
 
+// DeleteTariff löscht einen Tarif physisch. Messungen, die diesen Tarif
+// referenzieren, bekommen tariff_id = NULL (Snapshot-Werte bleiben erhalten).
+// Ein evtl. vorhandener Vorgänger wird NICHT reaktiviert — das Profil hat
+// dann schlicht keinen Tarif mehr und kann bei Bedarf neu angelegt werden.
+func DeleteTariff(db *sql.DB, id int64) error {
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// Referenzen aus results entfernen (Snapshot-Werte bleiben erhalten)
+	if _, err := tx.Exec(`UPDATE results SET tariff_id = NULL WHERE tariff_id = ?`, id); err != nil {
+		return fmt.Errorf("failed to unlink results: %w", err)
+	}
+
+	if _, err := tx.Exec(`DELETE FROM tariffs WHERE id = ?`, id); err != nil {
+		return fmt.Errorf("failed to delete tariff: %w", err)
+	}
+
+	return tx.Commit()
+}
+
 func GetActiveTariff(db *sql.DB, profileID int64, at time.Time) (*tariff.Tariff, error) {
 	if at.IsZero() {
 		at = time.Now().UTC()

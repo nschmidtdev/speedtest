@@ -112,6 +112,11 @@ func parseQueryInt(r *http.Request, key string, defaultVal int) int {
 	return v
 }
 
+// isHTMX erkennt HTMX-Anfragen am HX-Request-Header.
+func isHTMX(r *http.Request) bool {
+	return r.Header.Get("HX-Request") == "true"
+}
+
 // === Handlers ===
 
 // HealthHandler — GET /api/health
@@ -123,7 +128,7 @@ func (s *AppState) HealthHandler(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]string{"status": status, "service": "speedtest"})
 }
 
-// ListProfilesHandler — GET /api/profiles
+// ListProfilesHandler — GET /api/profiles (JSON für JS, HTML für HTMX)
 func (s *AppState) ListProfilesHandler(w http.ResponseWriter, r *http.Request) {
 	profiles, err := storage.ListProfiles(s.DB)
 	if err != nil {
@@ -133,22 +138,38 @@ func (s *AppState) ListProfilesHandler(w http.ResponseWriter, r *http.Request) {
 	if profiles == nil {
 		profiles = []engine.Profile{}
 	}
+	if isHTMX(r) {
+		renderPartial(w, "profile_list.html", profiles)
+		return
+	}
 	writeJSON(w, profiles)
 }
 
-// CreateProfileHandler — POST /api/profiles
+// CreateProfileHandler — POST /api/profiles (JSON für JS-Dialog, HTMX-Reload bei HTMX-Form)
 func (s *AppState) CreateProfileHandler(w http.ResponseWriter, r *http.Request) {
 	var p engine.Profile
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		if isHTMX(r) {
+			renderHTMXError(w, "invalid JSON: "+err.Error())
+			return
+		}
 		writeError(w, http.StatusBadRequest, "invalid JSON: "+err.Error())
 		return
 	}
 	if err := scheduler.ValidateExpr(p.CronExpr); err != nil {
+		if isHTMX(r) {
+			renderHTMXError(w, err.Error())
+			return
+		}
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	id, err := storage.CreateProfile(s.DB, p)
 	if err != nil {
+		if isHTMX(r) {
+			renderHTMXError(w, err.Error())
+			return
+		}
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -156,6 +177,10 @@ func (s *AppState) CreateProfileHandler(w http.ResponseWriter, r *http.Request) 
 	// Sync scheduler if enabled
 	if s.Scheduler != nil && p.Enabled && p.CronExpr != "" {
 		s.Scheduler.SyncProfile(p)
+	}
+	if isHTMX(r) {
+		s.ListProfilesHandler(w, r) // gibt HTML-Liste zurück
+		return
 	}
 	writeJSON(w, p)
 }

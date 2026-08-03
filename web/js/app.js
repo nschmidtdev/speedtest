@@ -84,10 +84,8 @@ tabs.forEach(tab => {
         document.getElementById(`tab-${target}`).classList.add('active');
 
         if (target === 'history') loadHistoryData();
-        if (target === 'profiles') loadProfiles();
         if (target === 'settings') {
             loadSchedulerStatus();
-            if (typeof loadTariffs === 'function') loadTariffs();
         }
     });
 });

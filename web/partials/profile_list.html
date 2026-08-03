@@ -1,0 +1,27 @@
+{{range .}}
+<div class="profile-card">
+  <div style="display:flex;justify-content:space-between;align-items:start;">
+    <div class="profile-card-left" style="cursor:pointer;" data-edit-id="{{.ID}}">
+      <h3>{{.Name}}</h3>
+      <div class="profile-meta">
+        <span>📁 {{if .CronExpr}}{{.CronExpr}}{{else}}Manuell{{end}}</span>
+        <span>🧮 {{len .Metrics}} Metriken</span>
+        <span>🖥 {{if eq .ServerMode "auto"}}Auto: Ookla wählt{{else}}{{.ServerMode}}: {{len .ServerIDs}} Server{{end}}</span>
+      </div>
+      <div class="profile-metrics">
+        {{range .Metrics}}<span class="metric-tag">{{.}}</span>{{end}}
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:end;gap:8px;">
+      <label class="toggle">
+        <input type="checkbox" {{if .Enabled}}checked{{end}} data-profile-id="{{.ID}}" class="toggle-enable" />
+        <span class="toggle-slider"></span>
+      </label>
+      <button class="btn btn-sm btn-secondary" data-edit-id="{{.ID}}">Bearbeiten</button>
+    </div>
+  </div>
+</div>
+{{end}}
+{{if eq (len .) 0}}
+<p class="coming-soon">Keine Profile vorhanden.</p>
+{{end}}

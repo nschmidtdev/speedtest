@@ -1,0 +1,11 @@
+{{if .Tariffs}}
+<option value="">Tarif wählen …</option>
+{{range .Tariffs}}
+  <option value="{{.Name}}">{{.Name}}</option>
+{{end}}
+<option value="__custom">Eigener Tarif …</option>
+{{else if eq .ProviderID "__custom"}}
+<option value="__custom">Eigener Tarif …</option>
+{{else}}
+<option value="">Zuerst Anbieter wählen …</option>
+{{end}}
