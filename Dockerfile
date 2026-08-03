@@ -1,13 +1,8 @@
-FROM golang:1.24-alpine AS build
+FROM golang:1.23-alpine AS build
 WORKDIR /src
 
-ENV GOPROXY=https://proxy.golang.org,direct
-ENV GOSUMDB=sum.golang.org
-
-COPY go.mod go.sum ./
-RUN go mod download
-
 COPY . .
+RUN go mod download
 RUN go mod tidy
 
 ARG TARGETOS=linux
