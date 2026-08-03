@@ -1,11 +1,3 @@
 .git
-.github
 .gitignore
-Dockerfile
-docker-compose.yml
-README.md
-LICENSE
-*.db
-*.db-shm
-*.db-wal
 hermes-verify-*.sh
