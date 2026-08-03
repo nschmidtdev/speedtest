@@ -66,6 +66,11 @@ docker compose logs --tail=100 speedtest
 
 # Beenden; das Datenvolume bleibt erhalten
 docker compose down
+
+# GitHub Container Registry Images
+# (automatisch gebaut und veröffentlicht via CI/CD)
+docker pull ghcr.io/<your-org>/speedtest:latest
+docker run -d --name speedtest -p 8080:8080 -v speedtest-data:/data ghcr.io/<your-org>/speedtest:latest
 ```
 
 Der Container läuft als nicht privilegierter Benutzer, besitzt keine zusätzlichen Linux-Capabilities und verwendet `/data/speedtest.db`.
