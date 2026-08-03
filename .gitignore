@@ -1,7 +1,7 @@
 # Build artifacts
 speedtest.exe
-speedtest
-speedtest-new.exe
+/speedtest
+/speedtest-new.exe
 *.exe
 
 # SQLite databases
