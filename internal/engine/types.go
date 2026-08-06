@@ -26,8 +26,11 @@ type TestResult struct {
 	ServerName              string    `json:"server_name"`
 	ServerURL               string    `json:"server_url"`
 	DurationMs              int64     `json:"duration_ms"`
-	Status                  string    `json:"status"`
+	Status                  string    `json:"status"`             // "success", "partial", "failed"
 	ErrorMessage            string    `json:"error_message,omitempty"`
+	// FailedMetrics lists metrics that were requested but whose test errored.
+	// Distinguishes "0 Mbit/s because the test failed" from "0 because not measured".
+	FailedMetrics []string `json:"failed_metrics,omitempty"`
 }
 
 // Hop repräsentiert einen einzelnen Traceroute-Hop.

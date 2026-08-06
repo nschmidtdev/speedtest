@@ -2,14 +2,17 @@ package engine
 
 import (
 	"context"
-	"encoding/binary"
 	"fmt"
 	"net"
 	"time"
 )
 
-// RunTraceroute führt ein UDP/ICMP-basiertes Traceroute zum Ziel aus.
+// RunTraceroute führt ein ICMP-basiertes Traceroute zum Ziel aus.
 // Gibt bis zu maxHops Stationen zurück.
+//
+// Benötigt Raw Sockets (root/Admin). Wenn die Berechtigung fehlt,
+// wird ein Fehler zurückgegeben, sodass der Aufrufer entscheiden kann,
+// ob er das Ergebnis ignorieren oder dem Nutzer eine Meldung zeigen will.
 func (e *SpeedtestEngine) RunTraceroute(ctx context.Context, host string, maxHops int, cb ProgressCallback) ([]Hop, error) {
 	if maxHops <= 0 {
 		maxHops = 30
@@ -18,6 +21,13 @@ func (e *SpeedtestEngine) RunTraceroute(ctx context.Context, host string, maxHop
 	if cb != nil {
 		cb(ProgressEvent{Type: "progress", Phase: "traceroute", Timestamp: time.Now()})
 	}
+
+	// Permission-Check: Ein einzelner traceHop-Versuch zeigt ob Raw Sockets verfügbar sind.
+	probe, _, probeErr := traceHop(ctx, net.IPv4(127, 0, 0, 1), 1)
+	if probeErr != nil {
+		return nil, fmt.Errorf("traceroute requires raw socket privileges (root/admin): %w", probeErr)
+	}
+	_ = probe
 
 	// Resolve target IP
 	targetIP, err := net.ResolveIPAddr("ip4", host)
@@ -167,5 +177,3 @@ func setTTL(conn *net.IPConn, ttl int) error {
 
 // makeICMPEcho is already defined in bufferbloat.go
 // icmpChecksum is already defined in bufferbloat.go
-
-var _ = binary.BigEndian // keep import

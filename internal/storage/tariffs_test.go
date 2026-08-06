@@ -119,6 +119,18 @@ func TestOpenBackfillsMissingComparisonSnapshots(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	// Reset schema_version to simulate a pre-migration DB on re-open
+	db2, err := Open(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := db2.Exec(`DELETE FROM schema_version`); err != nil {
+		t.Fatal(err)
+	}
+	if err := db2.Close(); err != nil {
+		t.Fatal(err)
+	}
+
 	db, err = Open(path)
 	if err != nil {
 		t.Fatal(err)

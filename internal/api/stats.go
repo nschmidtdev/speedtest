@@ -94,7 +94,9 @@ func (s *AppState) StatsHandler(w http.ResponseWriter, r *http.Request) {
 	byDay := map[string]*dayAccumulator{}
 	included := 0
 	for _, x := range results {
-		if x.Status != "success" || x.MeasuredAt.Before(cutoff) {
+		// "partial" Results sind gültig — failed Metrics sind 0 und werden vom
+		// Accumulator ignoriert (v <= 0). "failed" Results ganz überspringen.
+		if x.Status == "failed" || x.MeasuredAt.Before(cutoff) {
 			continue
 		}
 		included++

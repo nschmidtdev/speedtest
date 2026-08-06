@@ -159,7 +159,6 @@ func (s *AppState) ComplaintHandler(w http.ResponseWriter, r *http.Request) {
 		TotalBelow:     streak.TotalBelowDays,
 		Rows:           rows,
 	}
-	_ = profile // Profil geladen für Authorization-Check, nicht im Template verwendet
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	renderPartial(w, "complaint.html", data)

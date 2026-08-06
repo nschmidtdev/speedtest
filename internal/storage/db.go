@@ -50,7 +50,8 @@ CREATE TABLE IF NOT EXISTS results (
     server_url      TEXT,
     duration_ms     INTEGER,
     status          TEXT NOT NULL DEFAULT 'success',
-    error_message   TEXT
+    error_message   TEXT,
+    failed_metrics  TEXT NOT NULL DEFAULT '[]'
 );
 
 CREATE TABLE IF NOT EXISTS tariffs (
@@ -103,6 +104,11 @@ func Open(dbPath string) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to run migrations: %w", err)
 	}
 
+	// schema_version tracken, damit teure Migrationen nur einmal laufen
+	if err := migrateSchemaVersions(db); err != nil {
+		return nil, fmt.Errorf("schema version migration failed: %w", err)
+	}
+
 	// Migration: add server_mode and server_ids columns if they don't exist
 	// (ALTER TABLE ADD COLUMN errors if column exists, so we ignore the error)
 	for _, col := range []struct{ name, def string }{
@@ -121,11 +127,9 @@ func Open(dbPath string) (*sql.DB, error) {
 		{"tariff_up_percent", "REAL"},
 		{"tariff_up_deviation_mbps", "REAL"},
 		{"tariff_up_status", "TEXT"},
+		{"failed_metrics", "TEXT NOT NULL DEFAULT '[]'"},
 	} {
 		_, _ = db.Exec(fmt.Sprintf("ALTER TABLE results ADD COLUMN %s %s", col.name, col.def))
-	}
-	if err := BackfillTariffComparisons(db); err != nil {
-		return nil, fmt.Errorf("failed to backfill tariff comparisons: %w", err)
 	}
 
 	// Retention: clean up old results if SPEEDTEST_RETENTION_DAYS is set
@@ -150,6 +154,48 @@ func getRetentionDays() int {
 		return 0
 	}
 	return n
+}
+
+// currentSchemaVersion wird inkrementiert, wenn eine neue versionierte Migration dazukommt.
+const currentSchemaVersion = 2
+
+// migrateSchemaVersions führt versionierte Migrationen aus, die nur einmal
+// (beim Sprung von version N auf N+1) laufen sollen. Das verhindert, dass
+// teure Backfills bei jedem Start wiederholt werden.
+func migrateSchemaVersions(db *sql.DB) error {
+	// Tabelle anlegen falls nicht vorhanden (IF NOT EXISTS im schema-Block nicht garantiert
+	// wenn schema_version dort noch nicht steht)
+	if _, err := db.Exec(`CREATE TABLE IF NOT EXISTS schema_version (
+		version INTEGER PRIMARY KEY,
+		applied_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+	)`); err != nil {
+		return fmt.Errorf("create schema_version table: %w", err)
+	}
+
+	var current int
+	err := db.QueryRow(`SELECT COALESCE(MAX(version), 0) FROM schema_version`).Scan(&current)
+	if err != nil {
+		return fmt.Errorf("read schema version: %w", err)
+	}
+
+	for v := current + 1; v <= currentSchemaVersion; v++ {
+		switch v {
+		case 1:
+			// v1: Backfill tariff comparison snapshots (war vorher bei jedem Start)
+			if err := BackfillTariffComparisons(db); err != nil {
+				return fmt.Errorf("migration v1 (backfill tariff comparisons): %w", err)
+			}
+		case 2:
+			// v2: failed_metrics column wurde bereits per ALTER TABLE hinzugefügt.
+			// Keine zusätzliche Aktion nötig — Marker-Version für zukünftige Erweiterungen.
+		}
+		if _, err := db.Exec(`INSERT INTO schema_version (version) VALUES (?)`, v); err != nil {
+			return fmt.Errorf("record schema version %d: %w", v, err)
+		}
+		log.Printf("Schema migration v%d applied", v)
+	}
+
+	return nil
 }
 
 // SeedDefaults legt die Standard-Profile an, falls noch keine existieren.

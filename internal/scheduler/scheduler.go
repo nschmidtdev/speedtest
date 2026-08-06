@@ -1,7 +1,6 @@
 package scheduler
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -192,6 +191,3 @@ func (s *Scheduler) addJob(p engine.Profile) {
 type cronLogWriter struct{}
 
 func (cronLogWriter) Write(p []byte) (int, error) { return len(p), nil }
-
-// Compile-time interface check
-var _ context.Context

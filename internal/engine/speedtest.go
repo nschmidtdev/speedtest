@@ -166,6 +166,12 @@ func (e *SpeedtestEngine) RunTest(ctx context.Context, opts RunOptions, cb Progr
 		})
 		if err != nil {
 			log.Printf("Ping test warning: %v", err)
+			if want["ping"] {
+				result.FailedMetrics = append(result.FailedMetrics, "ping")
+			}
+			if want["jitter"] {
+				result.FailedMetrics = append(result.FailedMetrics, "jitter")
+			}
 		} else {
 			result.PingMs = float64(server.Latency.Microseconds()) / 1000.0
 			result.JitterMs = float64(server.Jitter.Microseconds()) / 1000.0
@@ -196,6 +202,7 @@ func (e *SpeedtestEngine) RunTest(ctx context.Context, opts RunOptions, cb Progr
 		e.client.SetCallbackDownload(func(speedtest.ByteRate) {})
 		if err != nil {
 			log.Printf("Download test warning: %v", err)
+			result.FailedMetrics = append(result.FailedMetrics, "download")
 		} else {
 			result.DownloadMbps = server.DLSpeed.Mbps()
 		}
@@ -222,6 +229,7 @@ func (e *SpeedtestEngine) RunTest(ctx context.Context, opts RunOptions, cb Progr
 		e.client.SetCallbackUpload(func(speedtest.ByteRate) {})
 		if err != nil {
 			log.Printf("Upload test warning: %v", err)
+			result.FailedMetrics = append(result.FailedMetrics, "upload")
 		} else {
 			result.UploadMbps = server.ULSpeed.Mbps()
 		}
@@ -232,6 +240,7 @@ func (e *SpeedtestEngine) RunTest(ctx context.Context, opts RunOptions, cb Progr
 		idleMs, loadedMs, score, bbErr := e.RunBufferbloat(ctx, cb)
 		if bbErr != nil {
 			log.Printf("Bufferbloat measurement warning: %v", bbErr)
+			result.FailedMetrics = append(result.FailedMetrics, "bufferbloat")
 		} else {
 			result.BufferbloatIdleMs = idleMs
 			result.BufferbloatLoadedMs = loadedMs
@@ -244,12 +253,18 @@ func (e *SpeedtestEngine) RunTest(ctx context.Context, opts RunOptions, cb Progr
 		hops, trErr := e.RunTraceroute(ctx, "1.1.1.1", 30, cb)
 		if trErr != nil {
 			log.Printf("Traceroute warning: %v", trErr)
+			result.FailedMetrics = append(result.FailedMetrics, "traceroute")
 		} else {
 			result.Traceroute = hops
 		}
 	}
 
 	result.DurationMs = time.Since(start).Milliseconds()
+
+	// Status: "partial" wenn einige Metriken fehlgeschlagen sind
+	if len(result.FailedMetrics) > 0 && result.Status == "success" {
+		result.Status = "partial"
+	}
 
 	if cb != nil {
 		cb(ProgressEvent{Type: "test_complete", Result: result, Timestamp: time.Now()})

@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"speedtest/internal/engine"
 )
@@ -86,13 +85,29 @@ func UpdateProfile(db *sql.DB, p engine.Profile) error {
 	return nil
 }
 
-// DeleteProfile löscht ein Profil anhand der ID.
+// DeleteProfile löscht ein Profil und alle verknüpften Daten.
+// Results und Tariffs werden zuerst gelöscht, damit der FK-Constraint
+// (foreign_keys=ON) nicht zuschlägt.
 func DeleteProfile(db *sql.DB, id int64) error {
-	_, err := db.Exec(`DELETE FROM profiles WHERE id = ?`, id)
+	tx, err := db.Begin()
 	if err != nil {
+		return fmt.Errorf("failed to begin transaction: %w", err)
+	}
+	defer tx.Rollback()
+
+	// Results zuerst (sie referenzieren tariffs über tariff_id)
+	if _, err := tx.Exec(`DELETE FROM results WHERE profile_id = ?`, id); err != nil {
+		return fmt.Errorf("failed to delete results: %w", err)
+	}
+	// Tariffs
+	if _, err := tx.Exec(`DELETE FROM tariffs WHERE profile_id = ?`, id); err != nil {
+		return fmt.Errorf("failed to delete tariffs: %w", err)
+	}
+	// Profile
+	if _, err := tx.Exec(`DELETE FROM profiles WHERE id = ?`, id); err != nil {
 		return fmt.Errorf("failed to delete profile: %w", err)
 	}
-	return nil
+	return tx.Commit()
 }
 
 // SetProfileEnabled aktiviert/deaktiviert ein Profil.
@@ -143,6 +158,3 @@ func scanProfile(s scanner) (*engine.Profile, error) {
 
 	return &p, nil
 }
-
-// Compile-time: ensure time import is used (for future use in profile queries)
-var _ = time.Now

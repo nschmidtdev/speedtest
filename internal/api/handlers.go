@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"speedtest/internal/engine"
@@ -28,7 +29,7 @@ type AppState struct {
 
 	// Test-Lock: nur ein Test gleichzeitig
 	testMu      sync.Mutex
-	testRunning bool
+	testRunning atomic.Bool
 }
 
 // NewAppState erzeugt den geteilten State.
@@ -49,8 +50,8 @@ func (s *AppState) RunScheduledTest(profileID int64) {
 		return
 	}
 	defer s.testMu.Unlock()
-	s.testRunning = true
-	defer func() { s.testRunning = false }()
+	s.testRunning.Store(true)
+	defer func() { s.testRunning.Store(false) }()
 
 	p, err := storage.GetProfile(s.DB, profileID)
 	if err != nil {
@@ -302,8 +303,8 @@ func (s *AppState) RunTestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer s.testMu.Unlock()
-	s.testRunning = true
-	defer func() { s.testRunning = false }()
+	s.testRunning.Store(true)
+	defer func() { s.testRunning.Store(false) }()
 
 	var body struct {
 		ProfileID int `json:"profile_id"`
@@ -361,7 +362,7 @@ func (s *AppState) RunTestHandler(w http.ResponseWriter, r *http.Request) {
 // TestStatusHandler — GET /api/test/status
 func (s *AppState) TestStatusHandler(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]any{
-		"running": s.testRunning,
+		"running": s.testRunning.Load(),
 	})
 }
 

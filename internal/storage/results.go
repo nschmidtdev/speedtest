@@ -15,7 +15,8 @@ const resultSelectColumns = `id, profile_id, tariff_id,
 	tariff_up_percent, tariff_up_deviation_mbps, tariff_up_status,
 	measured_at, download_mbps, upload_mbps, ping_ms, jitter_ms,
 	bufferbloat_idle_ms, bufferbloat_loaded_ms, bufferbloat_score,
-	packet_loss_pct, traceroute, server_name, server_url, duration_ms, status, error_message`
+	packet_loss_pct, traceroute, server_name, server_url, duration_ms, status, error_message,
+	failed_metrics`
 
 // InsertResult speichert ein Testergebnis inklusive Tarif-Abweichungssnapshot.
 func InsertResult(db *sql.DB, r engine.TestResult) (int64, error) {
@@ -47,8 +48,9 @@ func InsertResult(db *sql.DB, r engine.TestResult) (int64, error) {
 		     tariff_up_percent, tariff_up_deviation_mbps, tariff_up_status,
 		     measured_at, download_mbps, upload_mbps, ping_ms, jitter_ms,
 		     bufferbloat_idle_ms, bufferbloat_loaded_ms, bufferbloat_score,
-		     packet_loss_pct, traceroute, server_name, server_url, duration_ms, status, error_message)
-		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+		     packet_loss_pct, traceroute, server_name, server_url, duration_ms, status, error_message,
+		     failed_metrics)
+		 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
 		nilIfZero(r.ProfileID), nilIfZero(r.TariffID),
 		comparisonNumber(r.TariffDownStatus, r.TariffDownPercent),
 		comparisonNumber(r.TariffDownStatus, r.TariffDownDeviationMbps), nilIfEmpty(r.TariffDownStatus),
@@ -60,6 +62,7 @@ func InsertResult(db *sql.DB, r engine.TestResult) (int64, error) {
 		nilIfZeroFloat(r.BufferbloatIdleMs), nilIfZeroFloat(r.BufferbloatLoadedMs), nilIfEmpty(r.BufferbloatScore),
 		nilIfZeroFloat(r.PacketLossPct), tracerouteJSON, r.ServerName, r.ServerURL,
 		r.DurationMs, r.Status, r.ErrorMessage,
+		failedMetricsJSON(r.FailedMetrics),
 	)
 	if err != nil {
 		return 0, fmt.Errorf("failed to insert result: %w", err)
@@ -143,6 +146,7 @@ func scanResult(s scanner) (*engine.TestResult, error) {
 		bufferbloatIdleMs, bufferbloatLoadedMs, packetLossPct   sql.NullFloat64
 		bufferbloatScore, tracerouteJSON, serverName, serverURL sql.NullString
 		errorMessage, measuredAt                                sql.NullString
+		failedMetricsJSON                                      sql.NullString
 	)
 	err := s.Scan(
 		&r.ID, &profileID, &tariffID,
@@ -151,6 +155,7 @@ func scanResult(s scanner) (*engine.TestResult, error) {
 		&measuredAt, &downloadMbps, &uploadMbps, &pingMs, &jitterMs,
 		&bufferbloatIdleMs, &bufferbloatLoadedMs, &bufferbloatScore,
 		&packetLossPct, &tracerouteJSON, &serverName, &serverURL, &durationMs, &r.Status, &errorMessage,
+		&failedMetricsJSON,
 	)
 	if err != nil {
 		return nil, err
@@ -177,6 +182,9 @@ func scanResult(s scanner) (*engine.TestResult, error) {
 	r.ErrorMessage = errorMessage.String
 	if tracerouteJSON.Valid && tracerouteJSON.String != "" {
 		_ = json.Unmarshal([]byte(tracerouteJSON.String), &r.Traceroute)
+	}
+	if failedMetricsJSON.Valid && failedMetricsJSON.String != "" && failedMetricsJSON.String != "[]" {
+		_ = json.Unmarshal([]byte(failedMetricsJSON.String), &r.FailedMetrics)
 	}
 	if measuredAt.Valid {
 		for _, layout := range []string{
@@ -212,6 +220,17 @@ func nilIfEmpty(s string) any {
 		return nil
 	}
 	return s
+}
+
+func failedMetricsJSON(metrics []string) string {
+	if len(metrics) == 0 {
+		return "[]"
+	}
+	b, err := json.Marshal(metrics)
+	if err != nil {
+		return "[]"
+	}
+	return string(b)
 }
 
 func comparisonNumber(status string, value float64) any {

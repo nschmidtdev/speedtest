@@ -46,8 +46,8 @@ func ComputeStreak(db *sql.DB, profileID int64, normalDown, normalUp,
 	// Nach Werktag gruppieren
 	byDay := map[string][]engine.TestResult{}
 	for _, r := range results {
-		if r.Status != "success" {
-			continue
+		if r.Status == "failed" {
+			continue // "partial" ist gültig, nur "failed" überspringen
 		}
 		key := r.MeasuredAt.Local().Format("2006-01-02")
 		byDay[key] = append(byDay[key], r)
@@ -71,21 +71,27 @@ func ComputeStreak(db *sql.DB, profileID int64, normalDown, normalUp,
 		d := StreakDay{Date: date, Workday: date.Weekday() != time.Sunday}
 		if measurements, ok := byDay[date.Format("2006-01-02")]; ok {
 			var downSum, upSum float64
-			var n int
+			var downCount, upCount int
 			for _, r := range measurements {
 				if r.DownloadMbps > 0 {
 					downSum += r.DownloadMbps
-					n++
+					downCount++
 				}
-				upSum += r.UploadMbps
+				if r.UploadMbps > 0 {
+					upSum += r.UploadMbps
+					upCount++
+				}
 			}
-			if n > 0 {
-				d.DownAvg = downSum / float64(n)
-				d.UpAvg = upSum / float64(n)
+			if downCount > 0 {
+				d.DownAvg = downSum / float64(downCount)
 				d.DownBelow = d.DownAvg < normalDown
-				d.UpBelow = d.UpAvg < normalUp
-				d.Below = d.DownBelow || d.UpBelow
 			}
+			if upCount > 0 {
+				d.UpAvg = upSum / float64(upCount)
+				d.UpBelow = d.UpAvg < normalUp
+			}
+			// Below wenn Down ODER Up gemessen und unter Normalwert
+			d.Below = d.DownBelow || d.UpBelow
 		}
 		days = append(days, d)
 	}
